@@ -69,10 +69,17 @@ narrative:
       hero_metric: "Automated compliance across millions of account records, ~100,000 affected rows"
 
 compensation:
-  # CONFIRM: replace with your actual numbers before the first evaluation.
-  target_range: "CONFIRM — e.g. RM 5,000-7,000/month"
+  # Monthly gross, MYR. Set 2026-08-25.
+  target_range: "RM 4,500 - 6,000 per month"
   currency: "MYR"
-  minimum: "CONFIRM — your walk-away number"
+  # Walk-away number: the figure below which the answer is no. Set at the bottom of
+  # the target range. Decided in advance, on purpose — see modes/_profile.md.
+  minimum: "RM 4,500 per month"
+  # The user calibrates the ask per employer rather than quoting one fixed number:
+  # anchor nearer 6,000 for well-funded tech (Grab, Shopee, Deriv, GXBank) and
+  # nearer 5,000 for graduate schemes and consulting, where the band is published
+  # and fixed. Always quote a range, never a single figure.
+  negotiable_by_employer: true
   location_flexibility: "Kuala Lumpur / Klang Valley preferred; open anywhere in Malaysia"
 
 location:
