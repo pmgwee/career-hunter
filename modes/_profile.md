@@ -160,6 +160,14 @@ person's name for a direct approach) → bold underlined subject line in caps �
 - [ ] **No certification exists.** Blank on three employer forms so far. AWS Cloud Practitioner
       or Azure AZ-900 fills it cheaply.
 - [ ] Confirm the iFAST job title matches the internship certificate wherever it appears.
+- [ ] **`Ai-Chatbot` publishes 276 MB of INTI course material** — 191 files across ECO6201E,
+      MGT7204E, PRB5201, PRB5202 under `backend/storage/course_files/` on the
+      `basic-chatbot-production` branch, including what looks like a licensed textbook
+      (`Online_Book_Economics_for_Managers__Use_for_MBADI_.pdf`), plus
+      `backend/storage/conversations.json`. Third-party copyright, on a **public** repo the CV
+      links to. Deferred by the user on 2026-08-25. Deleting in a new commit is NOT enough —
+      the files stay in git history; a real fix needs `git filter-repo`/BFG + force-push.
+      **Raise this before sending any application that cites this repo.**
 - [ ] "fine-tuned" on the BersamaAi bullet — only use if a real fine-tune was run.
       (Already removed from cv.md; keep it out unless confirmed.)
 - [ ] Confirm compensation target and walk-away number in `config/profile.yml`.
