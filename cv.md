@@ -92,7 +92,7 @@ Spring Batch, Postman, GitHub Actions, Vercel Cron Jobs, Next.js, Supabase
 
 ## Projects
 
-### Cross-Agent Context Engineering with Persistent Second Brain
+### [Cross-Agent Context Engineering with Persistent Second Brain](https://github.com/pmgwee/agent-knowledge-base-codex)
 *Rust · Obsidian · Hybrid RAG Retrieval · all-MiniLM-L6-v2 · SQLite FTS5 · Codegraph · MCP ·
 Claude Code & Codex Lifecycle Hooks · LongMemEval · Next.js*
 
@@ -106,7 +106,7 @@ Claude Code & Codex Lifecycle Hooks · LongMemEval · Next.js*
   real-time system condition, retrieval quality, hook delivery status, token baselines and
   deployment drift.
 
-### RAG Chatbot with Self Auto-Ingestion (INTI-MBA Chatbot)
+### [RAG Chatbot with Self Auto-Ingestion (INTI-MBA Chatbot)](https://github.com/pmgwee/Ai-Chatbot)
 *FastAPI · LangGraph · LangChain · Hybrid RAG Retrieval · Pinecone · RapidOCR · APScheduler ·
 Docker · AWS EC2 · Next.js*
 
@@ -116,7 +116,7 @@ Docker · AWS EC2 · Next.js*
 - Automated daily ingestion with APScheduler, keeping **215+ documents and 3,800+ searchable
   passages** continuously up to date with zero manual uploads.
 
-### Autonomous Trending News AI Agent (BersamaAi)
+### [Autonomous Trending News AI Agent (BersamaAi)](https://github.com/pmgwee/BersamaAi-community)
 *GCP Compute Engine · Python · Agent Harness · Discord MCP · GLM-5.2 · Groq Whisper ASR ·
 yt-dlp · GitHub Actions*
 
@@ -128,7 +128,7 @@ yt-dlp · GitHub Actions*
 - Handled caption-less video via an ASR model on a daily GCP cron job that summarizes curated
   YouTube channel videos.
 
-### Multi-Agent Routing Orchestration Claude Skills
+### [Multi-Agent Routing Orchestration Claude Skills](https://github.com/pmgwee/Multi-Agent-Autopilot)
 *Agent Skills · JavaScript · Prompt Engineering · Playwright · MCP*
 
 - Architected a hands-off pipeline (kickstart, autopilot, UAT-runbook) chaining a top-tier
@@ -137,7 +137,7 @@ yt-dlp · GitHub Actions*
 - Built an automated looped evaluation layer delivering Playwright screenshot evidence for a
   top-tier model to perform code review at each delivery phase.
 
-### LLM-Backed Music Recommendation & Real-Time LLM Usage Tracker
+### [LLM-Backed Music Recommendation & Real-Time LLM Usage Tracker](https://github.com/pmgwee/ai-music-recommendations)
 *GLM-5.2 · Next.js · TypeScript · Supabase · YouTube API · GCP OAuth 2.0 · Telegram Bot ·
 Tailwind CSS · Vercel*
 
