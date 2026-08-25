@@ -1,0 +1,41 @@
+{
+  "candidate": {
+    "name": "Gwee Per Ming",
+    "email": "perminggwee@gmail.com",
+    "phone": "+6011 5509 5871",
+    "location": "Kuala Lumpur, Malaysia",
+    "linkedin": "linkedin.com/in/gweeperming",
+    "github": "github.com/pmgwee",
+    "credentials": [
+      "Bachelor of Computer Science (Honours), Universiti Sains Malaysia",
+      "MBA candidate, INTI International University"
+    ]
+  },
+  "letter": {
+    "role_title": "Software Engineer, Backend (AI)",
+    "company": "Grab",
+    "city": "Petaling Jaya",
+    "date": "2026-08-25",
+    "greeting": "Dear Hiring Team,",
+    "opening": "LLM-Kit is a platform whose users are Grab's own engineers, which changes what good looks like. A framework that teams start every AI product from has to be reliable enough that nobody thinks about it, and that reliability lives in the parts most people bolt on last: the evaluations, the tracing, the guardrails. Everything I have built has been that shape: tooling other engineers and agents consume.",
+    "profile_intro": "I graduated in Computer Science from Universiti Sains Malaysia with a CGPA of 3.48 and three consecutive semesters on the Dean's List, spent six months inside a regulated fintech at iFAST Capital, and have since shipped four AI systems running in production on infrastructure I maintain myself. I am based in Kuala Lumpur, available immediately, and comfortable working onsite in Petaling Jaya.",
+    "achievements": [
+      {
+        "lead": "Built a LangGraph agent on FastAPI serving four live Canvas courses",
+        "impact": "with multi-query retrieval, LLM document grading and query rewriting, answers cited to source file and page, and a daily job that re-embeds only what changed and refuses to delete a source when the API returns a partial listing."
+      },
+      {
+        "lead": "Benchmarked my own retrieval engine at 96.0% Recall@5 and 0.922 MRR across 246,750 turns",
+        "impact": "which came out of finding lifecycle hooks that were failing silently, so I instrumented every context touchpoint and built a console for delivery, retrieval quality and drift instead of trusting the documentation."
+      },
+      {
+        "lead": "Shipped a Model Context Protocol (MCP) server exposing Discord as a tool surface to AI agents",
+        "impact": "next to an LLM-as-a-Judge that grades relevance and routes items into nine channels every three hours on a GCP virtual machine."
+      }
+    ],
+    "problems_section": "Two gaps are worth naming now rather than in week one. I write Python and Rust, not Go, and I have run production infrastructure on AWS and GCP without reaching for Kubernetes. Both are learnable and I would rather be measured on closing them than on a claim I cannot back. What I do bring from iFAST is a habit a platform shipping Vault-backed secrets and prompt guardrails will recognize. I architected an automated compliance job across millions of Oracle account records and optimized the SQL until it ran fast enough to be usable rather than merely correct. The lesson that stayed: sensitive records carry handling rules before they carry business value.",
+    "closing": "Grab names hunger and humility among the things it hires for. Naming what I cannot do yet, then closing it, is how I work. I would welcome a conversation about the Applied AI team and can be reached at perminggwee@gmail.com or +6011 5509 5871.",
+    "language_closing": null
+  },
+  "output_path": "output/Gwee_Per_Ming_Grab_Software_Engineer_Backend_AI_744000145032469_Cover_Letter.pdf"
+}

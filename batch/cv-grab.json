@@ -1,0 +1,111 @@
+{
+  "lang": "en",
+  "page_format": "a4",
+  "candidate": {
+    "name": "Gwee Per Ming",
+    "phone": "+6011-5509 5871",
+    "email": "perminggwee@gmail.com",
+    "linkedin": { "url": "https://linkedin.com/in/gweeperming", "display": "linkedin.com/in/gweeperming" },
+    "github": { "url": "https://github.com/pmgwee", "display": "github.com/pmgwee" },
+    "portfolio": { "url": "https://mingcreatives.com", "display": "mingcreatives.com" },
+    "location": "Kuala Lumpur, Malaysia",
+    "photo": ""
+  },
+  "sections": {
+    "summary": "Professional Summary",
+    "competencies": "Core Competencies",
+    "experience": "Experience",
+    "projects": "Projects",
+    "education": "Education",
+    "awards": "Awards & Honours",
+    "skills": "Skills"
+  },
+  "summary": "Computer Science graduate (CGPA 3.48, Dean's List x3) with six months of fintech delivery at iFAST Capital and four AI systems built end to end and running in production. My work is consistently the tooling other engineers and agents build on: LangGraph services on FastAPI, an MCP server exposing tools to AI agents, and a CLI-driven multi-agent pipeline — each shipped with its own evaluation and observability layer rather than bolted on afterwards. Benchmarked my own retrieval engine at 96.0% Recall@5 and 0.922 MRR across 246,750 turns.",
+  "competencies": [
+    "LangChain & LangGraph",
+    "MCP Adapters & Tool Use",
+    "FastAPI Services",
+    "LLM Evaluation & LLM-as-a-Judge",
+    "Observability & Instrumentation",
+    "Python Libraries & CLI Tooling",
+    "AWS & CI/CD Pipelines",
+    "SQL Query Optimization"
+  ],
+  "skills": [
+    { "category": "Languages", "items": "Python, SQL, TypeScript, Java, Rust" },
+    { "category": "LLM & Agents", "items": "LangChain, LangGraph, MCP, ReAct agents, RAG, hybrid retrieval, embeddings, chunking, prompt engineering, LLM-as-a-Judge, agent memory, multi-agent orchestration, model evaluation" },
+    { "category": "Backend & Data", "items": "FastAPI, REST API, Pinecone, Oracle DB, SQLite, Supabase, ETL, batch processing, SQL query development & optimization, data modeling" },
+    { "category": "Cloud & Delivery", "items": "AWS (EC2, S3, CloudFront, IAM), GCP Compute Engine, Docker, CI/CD, GitHub Actions, GitLab, Jenkins, APScheduler, Postman" },
+    { "category": "Practices", "items": "Agile sprints, requirements specification, UAT, change request management, technical documentation" }
+  ],
+  "projects": [
+    {
+      "name": "INTI-MBA Chatbot — RAG Study Assistant with Self Auto-Ingestion",
+      "url": "https://github.com/pmgwee/Ai-Chatbot",
+      "tech": "Python, FastAPI, LangChain, LangGraph, Pinecone, RapidOCR, PyMuPDF, APScheduler, MCP, Next.js",
+      "description": "LangGraph agent over four live Canvas LMS courses: multi-query retrieval, LLM document grading and query-rewriting self-correction, returning answers cited to source file and page. A daily APScheduler job diffs Canvas against a local manifest and re-embeds only what changed, with report-only deletion so a partial API response can never wipe real sources. RapidOCR plus PyMuPDF recover text from scanned pages and images embedded in DOCX/PPTX. A supervisor agent routes intent across research, summary and direct-answer specialists, and an MCP server exposes the study tools to external agents."
+    },
+    {
+      "name": "Cross-Agent Context Engineering — Persistent Second Brain",
+      "url": "https://github.com/pmgwee/agent-knowledge-base-codex",
+      "tech": "Rust, SQLite FTS5, hybrid retrieval (BM25 + vector + graph RRF), all-MiniLM-L6-v2, MCP, Codegraph, Next.js",
+      "description": "Persistent memory layer shared by Claude Code and Codex through native lifecycle hooks, fusing BM25, vector search and graph RRF. Reached 96.0% Recall@5 and 0.922 MRR across 246,750 turns with session-start context capped at 1,500 tokens. Built after discovering hooks were failing silently: instrumented every context touchpoint, defined benchmarks across time windows, and shipped a console tracking hook delivery, retrieval quality, token baselines and deployment drift."
+    },
+    {
+      "name": "Multi-Agent Autopilot — Self-Driving Phase Pipeline",
+      "url": "https://github.com/pmgwee/Multi-Agent-Autopilot",
+      "tech": "JavaScript, Agent Skills, MCP, Playwright, prompt engineering",
+      "description": "Scaffolding and CLI pipeline (kickstart, autopilot, UAT-runbook) that chains a top-tier planning model to a cheaper executor model, cutting manual prompting to zero with crash-safe resumption across sessions. An automated evaluation loop feeds Playwright screenshot evidence back to the planning model for code review at each delivery phase."
+    },
+    {
+      "name": "BersamaAi — Autonomous Trending News AI Agent",
+      "url": "https://github.com/pmgwee/BersamaAi-community",
+      "tech": "Python, GCP Compute Engine, GitHub Actions, Discord MCP, GLM-5.2, Groq Whisper ASR",
+      "description": "Ingestion workflow routing every candidate item through an LLM-as-a-Judge that grades relevance and classifies it into one of nine topic channels, publishing every three hours via GitHub Actions. Ships an MCP server exposing Discord as a tool surface to AI agents, and an ASR path that recovers caption-less video on a daily cron. Running in production on a GCP VM."
+    }
+  ],
+  "experience": [
+    {
+      "company": "iFAST Capital Sdn Bhd",
+      "role": "Automation Engineer Intern",
+      "location": "Bukit Bintang, Kuala Lumpur",
+      "dates": "March 2024 - August 2024",
+      "bullets": [
+        "Architected an automated compliance job over sensitive customer data across millions of Oracle account records, optimizing complex SQL to improve execution efficiency across ~100,000 affected rows and minimize database calls.",
+        "Partnered with a project director to translate a major Malaysian bank's change requests into technical specifications covering automation workflow, data specifications, batch-ETL pipelines and UAT datasets, then followed them through to release.",
+        "Collaborated with 14 developers and 4 project directors across monthly sprints, supporting CI/CD pipelines, change request management and production releases for business-critical fintech systems."
+      ]
+    },
+    {
+      "company": "Yierming Production (Studio)",
+      "role": "Founder",
+      "location": "Kuala Lumpur",
+      "dates": "May 2024 - Present",
+      "bullets": [
+        "Built and shipped client web content and branding independently, including for an AI education startup led by a former technology company AI Director.",
+        "Ran delivery end to end for commercial clients — scoping, build, launch and iteration — alongside full-time study."
+      ]
+    }
+  ],
+  "education": [
+    {
+      "title": "Master of Business Administration (Online Learning)",
+      "org": "INTI International University",
+      "year": "June 2026 - Present",
+      "description": "CGPA 3.67. Online delivery; does not restrict full-time employment."
+    },
+    {
+      "title": "Bachelor of Computer Science (Honours), Major in Software Engineering",
+      "org": "Universiti Sains Malaysia",
+      "year": "Oct 2021 - Oct 2025",
+      "description": "CGPA 3.48 (Second Class Upper). Dean's List, 3 consecutive semesters."
+    }
+  ],
+  "awards": [
+    { "title": "Champion — Young Entrepreneur Programme (YEP) 2025", "org": "MyPSA", "year": "2025" },
+    { "title": "Champion — Tech4Good SG Flagship 2024", "org": "ICMS-GovTech", "year": "2024" },
+    { "title": "Third Prize — ICT Innovation Track 2024", "org": "Huawei", "year": "2024" },
+    { "title": "Second Prize — Blockchain For Good Malaysia Inter-Varsity Hackathon", "org": "UTM-Algohub", "year": "2023" },
+    { "title": "Finalist — Payhack 24-Hour Hackathon", "org": "PayNet", "year": "2023" }
+  ]
+}
