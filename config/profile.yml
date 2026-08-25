@@ -1,0 +1,100 @@
+# Career-Ops Profile — Gwee Per Ming (Jonathan)
+# Sources: handsover/HANDOFF_job_applications.md + the four base resume .docx files.
+# Nothing here is invented. Fields marked CONFIRM: are placeholders awaiting your input.
+
+candidate:
+  full_name: "Gwee Per Ming"
+  preferred_name: "Jonathan"
+  email: "perminggwee@gmail.com"
+  phone: "+6011-55095871"
+  wechat: ""
+  location: "Kuala Lumpur, Malaysia"
+  home_address: "76, Taman Muhibbah, 84400 Sungai Mati, Tangkak, Johor"
+  linkedin: "linkedin.com/in/gweeperming"
+  portfolio_url: "https://mingcreatives.com"
+  github: "github.com/pmgwee"
+  # No photo: Malaysian/SG ATS does not expect one and it costs parse accuracy.
+  photo: ""
+
+target_roles:
+  primary:
+    - "AI Engineer"
+    - "Applied AI Engineer"
+    - "Machine Learning Engineer"
+    - "Data Engineer"
+    - "Software Engineer (Graduate)"
+  archetypes:
+    # These mirror your four existing base resumes 1:1.
+    - name: "AI / Applied AI Engineer"
+      level: "Graduate / Junior"
+      fit: "primary"
+    - name: "Data Engineer / Analytics Engineer"
+      level: "Graduate / Junior"
+      fit: "primary"
+    - name: "Cloud / Platform / DevOps Engineer"
+      level: "Graduate / Junior"
+      fit: "secondary"
+    - name: "Graduate Programme / Campus Hire"
+      level: "Graduate"
+      fit: "primary"
+    - name: "Technology Consultant (AI & Data)"
+      level: "Analyst"
+      fit: "secondary"
+
+narrative:
+  headline: "Fintech-trained CS graduate who ships and instruments production AI systems"
+  exit_story: >-
+    Six months inside a regulated fintech delivery team taught me that business
+    requirements come before technical specification, and that sensitive customer
+    records carry handling rules before they carry business value. I have spent the
+    time since building AI systems end to end — architecture, security, deployment,
+    and the observability to prove they actually work — on infrastructure I run myself.
+  superpowers:
+    - "Builds AI systems that stay observable after deployment, not just demos"
+    - "Translates business/change requests into technical specs (evidenced at iFAST)"
+    - "Ships solo end to end: architecture, build, secure, test, deploy, monitor"
+    - "Competition record under time pressure: 2 Champion titles, 6 podium finishes"
+  proof_points:
+    - name: "Cross-Agent Context Engineering / Persistent Second Brain"
+      url: "https://github.com/pmgwee"
+      hero_metric: "96.0% Recall@5, 0.922 MRR across 246,750 turns"
+    - name: "RAG Chatbot with Self Auto-Ingestion (INTI-MBA)"
+      url: "https://github.com/pmgwee"
+      hero_metric: "215+ docs / 3,800+ passages across 4 live Canvas LMS courses, zero manual uploads"
+    - name: "Autonomous Trending News AI Agent (BersamaAi)"
+      url: "https://github.com/pmgwee"
+      hero_metric: "LLM-as-a-Judge routing into 9 Discord channels every 3 hours"
+    - name: "iFAST Capital compliance job"
+      url: ""
+      hero_metric: "Automated compliance across millions of account records, ~100,000 affected rows"
+
+compensation:
+  # CONFIRM: replace with your actual numbers before the first evaluation.
+  target_range: "CONFIRM — e.g. RM 5,000-7,000/month"
+  currency: "MYR"
+  minimum: "CONFIRM — your walk-away number"
+  location_flexibility: "Kuala Lumpur / Klang Valley preferred; open anywhere in Malaysia"
+
+location:
+  country: "Malaysia"
+  city: "Kuala Lumpur"
+  timezone: "MYT (UTC+8)"
+  visa_status: "Malaysian citizen — no sponsorship needed in Malaysia"
+  authorized_in: ["Malaysia"]
+  needs_sponsorship: true   # true for roles OUTSIDE Malaysia (e.g. Singapore EP)
+
+language:
+  output: en
+
+spend_tier: standard
+
+cv:
+  output_format: "html"
+
+cover_letter:
+  notice_period_days: 0   # Available from August 2026; currently not employed full-time
+  primary_domain: "fintech software delivery and applied AI"
+
+availability:
+  earliest_start: "2026-08-01"
+  notes: "MBA is online-delivery and does not restrict full-time work."
