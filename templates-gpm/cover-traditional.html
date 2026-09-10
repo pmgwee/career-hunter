@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="{{LANG}}">
+<head>
+<meta charset="UTF-8">
+<title>{{NAME}} — Cover Letter</title>
+<style>
+  /* Traditional business-letter cover template.
+     Structure follows the archive format: personal letterhead, recipient block
+     with the date aligned right, formal greeting, underlined uppercase subject,
+     then four paragraphs where the first is unnumbered and the rest are 2. 3. 4.
+
+     Serif here is deliberate and is NOT an inconsistency with the sans-serif CV:
+     the letter is read by a person, the CV is parsed by an ATS first. Ligatures
+     are still disabled so pasted-back text extracts cleanly either way. */
+  @page { size: A4; margin: 0.6in; }
+  * { box-sizing: border-box; }
+  html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+
+  body {
+    margin: 0;
+    color: #1a1a1a;
+    background: #ffffff;
+    font-family: "Times New Roman", Times, serif;
+    font-size: 10.5pt;
+    line-height: 1.36;
+    font-variant-ligatures: none;
+    font-feature-settings: "liga" 0, "clig" 0, "dlig" 0;
+  }
+
+  .letter { width: 100%; max-width: 7.27in; margin: 0 auto; }
+
+  .header { text-align: center; }
+
+  .name {
+    color: #5b87b5;
+    font-size: 24pt;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    line-height: 1.1;
+    text-transform: uppercase;
+  }
+
+  .address, .contact { color: #666; font-size: 8.7pt; line-height: 1.35; }
+  .contact a { color: #7551a3; text-decoration: underline; }
+
+  .divider { border: 0; border-top: 0.6pt solid #bdbdbd; margin: 7pt 0 14pt; }
+
+  .recipient-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 18pt;
+    margin-bottom: 8pt;
+  }
+
+  .recipient { line-height: 1.32; }
+  /* Addressee and date are one size up from the body so the letter's two
+     orienting facts — who it is for, and when — are findable at a glance. */
+  .recipient strong { font-weight: 700; font-size: 11.5pt; }
+  .date { white-space: nowrap; font-size: 11.5pt; font-weight: 700; }
+
+  .greeting { margin: 0 0 10pt; }
+  .subject { font-weight: 700; text-decoration: underline; margin: 0 0 12pt; }
+
+  p { margin: 0 0 7pt; }
+
+  /* Grid rather than a list so the number sits in its own fixed column and the
+     justified text block keeps a clean left edge across wrapped lines. */
+  .numbered {
+    display: grid;
+    grid-template-columns: 18pt 1fr;
+    column-gap: 0;
+    text-align: justify;
+  }
+
+  .number { text-align: left; }
+  .closing { margin-top: 3pt; }
+  .signature { margin-top: 10pt; line-height: 1.28; }
+  .signature strong { font-weight: 700; }
+</style>
+</head>
+<body>
+  <main class="letter">
+    <header class="header">
+      <div class="name">{{NAME_UPPER}}</div>
+      <div class="address">{{SENDER_ADDRESS}}</div>
+      {{CONTACT_LINE}}
+    </header>
+
+    <hr class="divider">
+
+    <section class="recipient-row">
+      <div class="recipient">{{RECIPIENT_BLOCK}}</div>
+      <div class="date">{{DATELINE}}</div>
+    </section>
+
+    <p class="greeting">{{GREETING}}</p>
+    <p class="subject">{{SUBJECT}}</p>
+
+{{PARAGRAPHS}}
+
+    <p class="closing">{{CLOSING}}</p>
+
+    <p class="signature">{{SIGNOFF}}<br><br>
+      <strong>{{NAME_UPPER}}</strong><br>
+      {{CREDENTIALS}}
+    </p>
+  </main>
+</body>
+</html>

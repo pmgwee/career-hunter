@@ -8,11 +8,34 @@ candidate:
   email: "perminggwee@gmail.com"
   phone: "+6011-55095871"
   wechat: ""
-  location: "Kuala Lumpur, Malaysia"
+  # Malaysian form convention (candidate-confirmed 2026-08-26): a form asking for
+  # "First name" wants the surname/family name, and "Last name" wants the given
+  # name. Fill application forms in that order — do not reverse it to the
+  # Western convention.
+  first_name: "Gwee"          # surname / family name
+  last_name: "Per Ming"       # given name
+  # City / state / country are separate because application forms ask for them
+  # separately, and a required City autocomplete will not accept a state.
+  location: "Tangkak, Johor, Malaysia"
+  city: "Tangkak"
+  state: "Johor"
+  country: "Malaysia"
+  nationality: "Malaysian"
+  # Address comes in two shapes because forms do. Use `home_address` when there
+  # is ONE address field; use the split fields when the form also has postcode /
+  # city / state of its own. The split street line deliberately omits the
+  # postcode and town — they live in their own fields and would otherwise be
+  # entered twice.
   home_address: "76, Taman Muhibbah, 84400 Sungai Mati, Tangkak, Johor"
-  linkedin: "linkedin.com/in/gweeperming"
-  portfolio_url: "https://mingcreatives.com"
-  github: "github.com/pmgwee"
+  address_line: "76, Taman Muhibbah, Sungai Mati"
+  postcode: "84400"
+  linkedin: "https://www.linkedin.com/in/gweeperming"
+  portfolio_url: "https://www.mingcreatives.com/"
+  github: "https://github.com/pmgwee"
+  twitter: "https://x.com/gweeperming"
+  facebook: "https://www.facebook.com/ahming.lee.357/"
+  # When a form offers a single generic "Website" slot, use the portfolio.
+  default_website: "https://www.mingcreatives.com/"
   # No photo: Malaysian/SG ATS does not expect one and it costs parse accuracy.
   photo: ""
 
@@ -84,7 +107,8 @@ compensation:
 
 location:
   country: "Malaysia"
-  city: "Kuala Lumpur"
+  city: "Tangkak"
+  state: "Johor"
   timezone: "MYT (UTC+8)"
   visa_status: "Malaysian citizen — no sponsorship needed in Malaysia"
   authorized_in: ["Malaysia"]

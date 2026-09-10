@@ -1,8 +1,8 @@
 # Gwee Per Ming (Jonathan)
 
 **AI / Software Engineer — Fresh Graduate**
-Kuala Lumpur, Malaysia (home: Tangkak, Johor) · +6011-55095871 · perminggwee@gmail.com
-[Portfolio](https://mingcreatives.com) · [LinkedIn](https://linkedin.com/in/gweeperming) · [GitHub](https://github.com/pmgwee)
+Johor, Malaysia · +6011-55095871 · perminggwee@gmail.com
+[Portfolio](https://www.mingcreatives.com/) · [LinkedIn](https://www.linkedin.com/in/gweeperming) · [GitHub](https://github.com/pmgwee)
 
 **Availability:** Full-time from August 2026. Open to placement anywhere in Malaysia.
 **Work authorization:** Malaysian citizen — no sponsorship required in Malaysia.
@@ -10,6 +10,11 @@ Kuala Lumpur, Malaysia (home: Tangkak, Johor) · +6011-55095871 · perminggwee@g
 ---
 
 ## Summary
+
+<!-- BASE SUMMARY — never shipped verbatim. Every application rewrites this against
+     that job description (see modes/_custom.md → House Rules). Rewriting means
+     reordering, reframing and re-emphasising what this file already supports;
+     it never introduces a claim that is not evidenced below. Hard ceiling: 3 lines. -->
 
 Computer Science graduate (Dean's List x3, CGPA 3.48) and MBA candidate with six months of
 fintech software engineering at iFAST Capital, where I translated a major Malaysian bank's
@@ -37,19 +42,26 @@ Physics, Chemistry, Computer Science
 
 ## Skills
 
-**Programming Languages:** Python, SQL, TypeScript, Java, Rust, HTML, CSS
+<!-- Five categories, in this order. The generated CV renders one row per category;
+     reorder the items inside a category so the employer's own vocabulary comes
+     first (see modes/_profile.md → Skills line). Never add an item here that is
+     not evidenced by an Experience or Project bullet below. -->
+
+**Programming Languages:** TypeScript, Python, SQL, Rust, Java, JavaScript, HTML, CSS
 
 **AI Technologies:** RAG, Embeddings, Chunking, Hybrid Retrieval, Agentic Workflows,
 LangGraph, LangChain, Pinecone, Prompt Engineering, Agent Skills, MCP, Tool Use,
 Context Engineering, Agent Memory, Multi-Agent Orchestration, Model Evaluation,
 Coding Agent, Agent Harness
 
-**Tools & Methodologies:** FastAPI, REST API, Docker, AWS S3, AWS CloudFront, AWS IAM,
-GCP Compute Engine, GCP OAuth 2.0 & APIs, Oracle DB, SQLite, ETL, Batch Processing,
-SQL Query Development, Query Optimization, Data Modeling, CI/CD, Git, GitLab, Jenkins,
-Spring Batch, Postman, GitHub Actions, Vercel Cron Jobs, Next.js, Supabase
+**Cloud & Engineering Tools:** FastAPI, REST API, Docker, AWS EC2, AWS S3, AWS CloudFront,
+AWS IAM, GCP Compute Engine, GCP OAuth 2.0 & APIs, APScheduler, GitHub Actions,
+Vercel Cron Jobs, CI/CD, Git, GitLab, Jenkins, Postman, Playwright, Supabase, SQLite,
+Oracle DB, Next.js
 
-**Delivery:** Agile Sprints, Requirements Specification, UAT, Change Request Management
+**Data & Delivery:** SQL Query Development, Query Optimization, ETL, Batch Processing,
+Data Modeling, Spring Batch, Agile Sprints, Requirements Specification, UAT,
+Change Request Management
 
 **Spoken Languages:** Mandarin (Native), English, Malay
 
@@ -72,7 +84,7 @@ Spring Batch, Postman, GitHub Actions, Vercel Cron Jobs, Next.js, Supabase
   external business-critical fintech systems.
 
 ### Founder — Yierming Production (Studio)
-*Kuala Lumpur · May 2024 – Present*
+*Kuala Lumpur · May 2024 – December 2025*
 
 - Designed and launched branding and web content for an AI education startup led by a former
   technology company AI Director.
@@ -142,7 +154,8 @@ yt-dlp · GitHub Actions*
 Tailwind CSS · Vercel*
 
 - Engineered an LLM-driven recommendation algorithm analyzing listening habits and imported
-  playlists to rank candidate tracks, generating playlists with ~85% fresh songs.
+  playlists to rank candidate tracks, generating smooth playlists with ~85% fresh songs that
+  accurately captured true user preferences.
 - Built a real-time dashboard tracking live LLM provider usage across subscription and API-key
   accounts, with a Telegram webhook triggering real-time notification alerts.
 

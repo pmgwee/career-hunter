@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="{{LANG}}">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{{NAME}} — CV</title>
+<style>
+  /* Tailored CV template — house layout.
+     Typography, spacing and divider system are inherited from the career-ops
+     ATS-safe template on purpose: a static system sans stack (no bundled
+     webfonts) and ligatures disabled, because headless Chromium substitutes
+     fi/fl/ffi with U+FB01..3 at layout time and PDF text extractors — what an
+     ATS reads — decode them back, so "verification" is extracted as
+     "veriﬁcation" and a literal keyword search misses it.
+
+     Color carries meaning here, and only these two roles:
+       blue + underline = clickable (contact links, project titles)
+       purple           = organization name, never a link
+     Keep that invariant. A purple link or a blue company name breaks the one
+     cue a reader has for what is safe to click. */
+  :root {
+    --accent-color: hsl(187 74% 32%);
+    --link-color: #1a56a0;
+    --org-color: hsl(270, 70%, 45%);
+    --font-family: "Liberation Sans", 'Helvetica Neue', Arial, 'DejaVu Sans', sans-serif;
+    --font-size: 11px;
+    /* Must match generate-pdf.mjs's PDF_PAGE_MARGIN — the real page margin comes
+       from the @page rule that script appends, which reads this same variable. */
+    --page-margin: 0.6in;
+  }
+  @page { margin: var(--page-margin); }
+
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-variant-ligatures: none;
+    font-feature-settings: "liga" 0, "clig" 0, "dlig" 0;
+  }
+
+  html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+
+  body {
+    font-family: var(--font-family);
+    font-size: var(--font-size);
+    line-height: 1.5;
+    color: #1a1a2e;
+    background: #ffffff;
+  }
+
+  .page { width: 100%; max-width: {{PAGE_WIDTH}}; margin: 0 auto; padding: 2px 0; }
+
+  /* === HEADER === */
+  .header { margin-bottom: 20px; text-align: center; }
+
+  .header h1 {
+    font-size: 28px;
+    font-weight: 700;
+    color: #1a1a2e;
+    letter-spacing: -0.02em;
+    margin-bottom: 6px;
+    line-height: 1.1;
+  }
+
+  .header-gradient {
+    height: 2px;
+    background: linear-gradient(to right, var(--accent-color), var(--org-color));
+    border-radius: 1px;
+    margin-bottom: 10px;
+  }
+
+  .contact-row {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px 14px;
+    font-size: 10.5px;
+    line-height: 1.4;
+    color: #555;
+  }
+
+  .contact-row a { color: var(--link-color); text-decoration: underline; }
+  .contact-row .separator { color: #ccc; }
+
+  /* Links must never break across lines. */
+  a { white-space: nowrap; }
+
+  /* === SECTIONS === */
+  .section { margin-bottom: 18px; }
+
+  .section-title {
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--accent-color);
+    border-bottom: 1.5px solid #e2e2e2;
+    padding-bottom: 4px;
+    margin-bottom: 10px;
+    line-height: 1.2;
+  }
+
+  /* === SUMMARY === */
+  .summary-text { font-size: var(--font-size); line-height: 1.7; color: #2f2f2f; }
+
+  /* === SKILLS === */
+  .skill-item { font-size: 10.5px; color: #444; }
+  .skill-category { font-weight: 600; color: #333; }
+
+  /* === PROJECTS === */
+  .project { margin-bottom: 12px; }
+
+  .project-title {
+    font-size: 11.5px;
+    font-weight: 600;
+    color: var(--link-color);
+  }
+
+  .project-title a { color: inherit; text-decoration: underline; }
+
+  .project-bullets { padding-left: 18px; margin-top: 3px; }
+
+  .project-bullets li {
+    font-size: 10.5px;
+    line-height: 1.55;
+    color: #333;
+    margin-bottom: 3px;
+  }
+
+  /* Tech stack sits last, below the bullets. */
+  .project-tech { font-size: 9.5px; color: #888; margin-top: 3px; }
+
+  /* === EXPERIENCE / VOLUNTEERING === */
+  .job { margin-bottom: 14px; }
+
+  .job-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 12px;
+    margin-bottom: 4px;
+  }
+
+  .job-company { font-size: 12.5px; font-weight: 600; color: var(--org-color); }
+  .job-period { font-size: 10.5px; color: #777; white-space: nowrap; }
+  .job-role { font-size: var(--font-size); font-weight: 600; color: #333; margin-bottom: 6px; }
+  .job-location { font-size: 10px; color: #888; }
+  .job ul { padding-left: 18px; margin-top: 6px; }
+
+  .job li {
+    font-size: 10.5px;
+    line-height: 1.6;
+    color: #333;
+    margin-bottom: 4px;
+  }
+
+  /* Volunteering reuses the experience rhythm with a lighter title weight, so it
+     reads as supporting material rather than a second employment history. */
+  .volunteer-item { margin-bottom: 10px; }
+  .volunteer-title { font-size: 11.5px; font-weight: 600; color: #333; }
+
+  /* === EDUCATION === */
+  .edu-item { margin-bottom: 8px; }
+
+  .edu-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 12px;
+  }
+
+  .edu-title { font-weight: 600; font-size: var(--font-size); color: #333; }
+  .edu-org { color: var(--org-color); font-weight: 500; }
+  .edu-year { font-size: 10px; color: #777; white-space: nowrap; }
+  .edu-desc { font-size: 10px; color: #666; margin-top: 2px; line-height: 1.5; }
+
+  /* === AWARDS === */
+  /* Table model so title / issuer / year share one baseline across every row. */
+  .award-table { display: table; width: 100%; }
+  .award-item { display: table-row; }
+
+  .award-item > * {
+    display: table-cell;
+    vertical-align: baseline;
+    padding-bottom: 6px;
+  }
+
+  .award-title { font-size: 10.5px; font-weight: 500; color: #333; }
+  /* The placement itself is the scannable part of the row. */
+  .award-title strong { font-weight: 700; color: #1a1a1a; }
+  .award-org { color: var(--org-color); white-space: nowrap; }
+
+  .award-year {
+    font-size: 10px;
+    color: #777;
+    white-space: nowrap;
+    text-align: right;
+    width: 44px;
+  }
+
+  /* === PRINT === */
+  @media print {
+    body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    /* Right-aligned content (periods, years) aligns to the content-box edge, and
+       the last glyph's side bearing can spill ~1px past it into Chromium's print
+       clip. A right gutter restores it without re-centering the page. */
+    .page { padding: 0 0.18in 0 0; }
+  }
+
+  /* === PAGE BREAK CONTROL === */
+  /* Atomic units never split. A project is atomic on purpose: a title stranded
+     from its bullets, or a bare tech line at the top of a page, is unreadable. */
+  .header,
+  .edu-item,
+  .project,
+  .volunteer-item,
+  .award-item,
+  .skill-item {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  /* Keep a heading attached to what follows it. */
+  .section-title,
+  .job-company,
+  .job-role,
+  .job-location,
+  .project-title {
+    break-after: avoid;
+    page-break-after: avoid;
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- HEADER -->
+  <div class="header">
+    <h1>{{NAME}}</h1>
+    <div class="header-gradient"></div>
+    {{CONTACT_ROW}}
+  </div>
+
+  {{SECTIONS}}
+
+</div>
+</body>
+</html>
