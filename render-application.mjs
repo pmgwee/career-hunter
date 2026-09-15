@@ -162,7 +162,12 @@ function buildEducation(entries) {
     // CGPA and Dean's List belong on the Education line (modes/_profile.md), but
     // appending them to the degree title pushes the row to two lines and strands
     // the university on the wrap. They get their own sub-line instead.
-    const detail = e.detail ? `\n      <div class="edu-desc">${escapeHtml(e.detail)}</div>` : '';
+    // `**bold**` is honoured inside detail so the screening facts (CGPA, class of
+    // honours, Dean's List) carry the emphasis the approved graduate CVs shipped
+    // with. Escaping runs first, so no raw HTML from the payload can survive.
+    const detail = e.detail
+      ? `\n      <div class="edu-desc">${escapeHtml(e.detail).replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')}</div>`
+      : '';
     return `<div class="edu-item">
       <div class="edu-header">
         <span class="edu-title">${escapeHtml(e.title || '')}${org}</span>
@@ -241,9 +246,27 @@ function renderCv(payload, template) {
   }
 
   const candidate = payload.candidate || {};
+
+  // "Fitting to 2 pages: tighten layout, never content" (modes/_custom.md) --
+  // margins and leading are the named dials, and these are the exact values the
+  // approved bp and Maybank CVs shipped at. Cutting an item from the documented
+  // cut-order list is the next step after this, and rewording a bullet is never
+  // an option. Default density is untouched.
+  const densityCss = payload.density === 'compact' ? `<style>
+  body { line-height: 1.4; }
+  .header { margin-bottom: 14px; }
+  .section { margin-bottom: 9px; }
+  .project { margin-bottom: 7px; }
+  .project-bullets li { line-height: 1.4; }
+  .job { margin-bottom: 8px; }
+  .job ul { margin-top: 5px; }
+  .edu-item { margin-bottom: 6px; }
+</style>` : '';
+
   return {
     html: fillAll(template, {
       LANG: escapeHtml(payload.lang || 'en'),
+      DENSITY_CSS: densityCss,
       PAGE_WIDTH: PAGE_WIDTHS[payload.page_format] || PAGE_WIDTHS.a4,
       NAME: escapeHtml(candidate.name || ''),
       CONTACT_ROW: buildContactRow(candidate),
@@ -295,19 +318,44 @@ function renderCover(payload, template) {
   const paragraphs = Array.isArray(payload.paragraphs) ? payload.paragraphs.filter(Boolean) : [];
   if (paragraphs.length === 0) throw new Error('Cover payload has no paragraphs');
 
-  // House format: the opening paragraph carries no number, the rest are 2. 3. 4.
+  // House format: a block of opening paragraphs carries no number, and the rest
+  // are 2. 3. 4. -- the numbering deliberately skips 1, matching both
+  // self-authored reference letters (modes/_custom.md -> "Numbering").
+  // `unnumbered` says how many openers go unnumbered; the default of 1 keeps
+  // every existing payload rendering exactly as before.
+  const unnumbered = Number.isInteger(payload.unnumbered) && payload.unnumbered > 0
+    ? payload.unnumbered
+    : 1;
   const body = paragraphs.map((text, i) => (
-    i === 0
+    i < unnumbered
       ? `    <p>${escapeHtml(text)}</p>`
-      : `    <p class="numbered"><span class="number">${i + 1}.</span><span>${escapeHtml(text)}</span></p>`
+      : `    <p class="numbered"><span class="number">${i - unnumbered + 2}.</span><span>${escapeHtml(text)}</span></p>`
   )).join('\n\n');
 
   const credentials = (payload.credentials || []).filter(Boolean).map(escapeHtml).join('<br>\n      ');
   const wordCount = paragraphs.join(' ').trim().split(/\s+/).filter(Boolean).length;
 
+  // A letter in this voice runs long -- the graduate-programme letters are ~700
+  // words against a 350-420 house target -- and the house rule for overflow is
+  // "tighten layout, never content". These are the exact values the approved bp
+  // and Maybank letters shipped at, so a long letter still lands on one page
+  // without rewording it. Default density is untouched.
+  const densityCss = payload.density === 'compact' ? `<style>
+  body { font-size: 9.6pt; line-height: 1.19; }
+  .name { font-size: 18pt; }
+  .divider { margin: 6pt 0 11pt; }
+  .recipient { line-height: 1.26; }
+  .recipient strong, .date { font-size: 11pt; }
+  .greeting { margin: 0 0 8pt; }
+  .subject { margin: 0 0 10pt; }
+  p { margin: 0 0 6pt; }
+  .signature { margin-top: 8pt; line-height: 1.2; }
+</style>` : '';
+
   return {
     html: fillAll(template, {
       LANG: escapeHtml(payload.lang || 'en'),
+      DENSITY_CSS: densityCss,
       NAME: escapeHtml(candidate.name || ''),
       NAME_UPPER: escapeHtml((candidate.name || '').toUpperCase()),
       SENDER_ADDRESS: escapeHtml(candidate.address || ''),
