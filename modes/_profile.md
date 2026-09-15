@@ -171,3 +171,16 @@ person's name for a direct approach) → bold underlined subject line in caps �
 - [ ] "fine-tuned" on the BersamaAi bullet — only use if a real fine-tune was run.
       (Already removed from cv.md; keep it out unless confirmed.)
 - [ ] Confirm compensation target and walk-away number in `config/profile.yml`.
+
+## Writing Style
+
+_Inference extracted from `writing-samples/2026-09-13-cover-letter-srkk-data-engineer.md` and `writing-samples/2026-09-14-cover-letter-bp-graduate-data-ai.md` on 2026-09-15. Re-run if new samples are added._
+
+**Tone:** Formal, earnest and career-directed, with confidence grounded in personal motivation and concrete experience.
+**Sentence length:** Long, layered sentences with several connected clauses; avoid making the prose uniformly short or polished.
+**Openings:** Role-first and factual. State the application, degree, internship, MBA and availability before motivation.
+**Punctuation:** Comma-heavy, no em dashes, sparse parenthetical remarks and no contractions.
+**Vocabulary:** Prefers practical verbs such as build, work, learn, apply, contribute and ship. Uses the employer's own technical vocabulary only when it appears in that role's JD.
+**Structure:** Two unnumbered opening paragraphs followed by paragraphs 2, 3 and 4. Motivation leads into the iFAST lesson, self-directed technical work, then character and the ask.
+**Voice:** First-person and personal. Friends' career paths, early-career direction and learning alongside experienced colleagues are recurring motives.
+**Avoid:** Writerly hooks, slogans, metric-heavy cover-letter paragraphs, gap confessions, compressed marketing prose and imported platform names from another application.
