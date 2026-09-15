@@ -47,21 +47,20 @@ Physics, Chemistry, Computer Science
      first (see modes/_profile.md → Skills line). Never add an item here that is
      not evidenced by an Experience or Project bullet below. -->
 
-**Programming Languages:** TypeScript, Python, SQL, Rust, Java, JavaScript, HTML, CSS
+**Programming Languages:** SQL, Python, Java
 
-**AI Technologies:** RAG, Embeddings, Chunking, Hybrid Retrieval, Agentic Workflows,
-LangGraph, LangChain, Pinecone, Prompt Engineering, Agent Skills, MCP, Tool Use,
-Context Engineering, Agent Memory, Multi-Agent Orchestration, Model Evaluation,
-Coding Agent, Agent Harness
+**AI Technologies:** Agentic Workflows, Agent Memory (Obsidian), Agent Harness,
+Agent Skills & Plugin, MCP, Tool Use, Prompt Engineering, Context Engineering,
+Multi-Agent Workflow, RAG, Embeddings, Chunking, Hybrid Retrieval, Pinecone, LangGraph,
+LangChain
 
-**Cloud & Engineering Tools:** FastAPI, REST API, Docker, AWS EC2, AWS S3, AWS CloudFront,
-AWS IAM, GCP Compute Engine, GCP OAuth 2.0 & APIs, APScheduler, GitHub Actions,
-Vercel Cron Jobs, CI/CD, Git, GitLab, Jenkins, Postman, Playwright, Supabase, SQLite,
-Oracle DB, Next.js
+**Cloud & Engineering Tools:** Azure VM, Azure Key Vault, AWS EC2, AWS S3, AWS CloudFront,
+AWS IAM, GCP Compute Engine, GCP OAuth 2.0 & APIs, Oracle DB, SQLite, Supabase, CI/CD,
+Git, GitLab, Jenkins, GitHub Actions, APScheduler, Vercel Cron Jobs, FastAPI, REST API,
+Postman, Playwright, Next.js
 
-**Data & Delivery:** SQL Query Development, Query Optimization, ETL, Batch Processing,
-Data Modeling, Spring Batch, Agile Sprints, Requirements Specification, UAT,
-Change Request Management
+**Data & Delivery:** SQL Query, Query Optimization, ETL, Batch Processing,
+Spring Batch Pipelines, Requirements Gathering & Analysis
 
 **Spoken Languages:** Mandarin (Native), English, Malay
 
@@ -92,17 +91,32 @@ Change Request Management
 - Delivered digital marketing strategies for a 400K-follower F&B brand, driving 10K+ Shopee
   sales for top products.
 
-### Ski & Snowboard Technician — Ober Mountain
-*Gatlinburg, Tennessee, USA · Dec 2025 – May 2026 (USA Work & Travel)*
+### Ski & Snowboard Technician (USA Work & Travel) — Ober Mountain
+*Gatlinburg, Tennessee · December 2025 – May 2026*
 
-- Worked alongside colleagues from more than 10 nationalities in a high-volume, client-facing
-  operation.
-- Earned 2 Honorable Mentions for resolving customer issues through communication and
-  client-facing service.
+- Worked in a diverse, multicultural team representing over 10 countries, adapting to a new
+  work environment by overcoming language barriers.
+- Recognized with 2 Honorable Mentions from manager for resolving complex customer issues
+  with technical expertise.
 
 ---
 
 ## Projects
+
+### [Personal Always-On AI Agent (Hermes + Real-Ming Operations Layer)](https://github.com/pmgwee/real-ming)
+*Azure VM · Azure Key Vault · Hermes Agent (native Kanban/workspaces) · MCP · Agent Skills ·
+Telegram · Notion API · Google Calendar & Gmail APIs · Obsidian/LLM-Wiki · SQLite ·
+TypeScript · Node.js*
+
+- Architected a personalized Hermes Agent with a Real-Ming control-plane integration and
+  governance layer, preserving Hermes's native reasoning, capabilities, memory and kanban while
+  contributing configuration, 6 agent skills and 9 MCP tools reached as agent capabilities.
+- Enabled autonomous coding workflows spanning repository study, isolated workspace setup,
+  implementation, review, testing and PR-ready delivery, with Real-Ming supplying operator
+  preferences, rules and configuration.
+- Integrated cross-source coordination over Google Calendar, Gmail and Notion through provider
+  adapters with explicit routing across 3 Google accounts, composing two daily reports (a morning
+  brief and an evening executive roll-up) on an always-on Azure VM.
 
 ### [Cross-Agent Context Engineering with Persistent Second Brain](https://github.com/pmgwee/agent-knowledge-base-codex)
 *Rust · Obsidian · Hybrid RAG Retrieval · all-MiniLM-L6-v2 · SQLite FTS5 · Codegraph · MCP ·
@@ -115,18 +129,7 @@ Claude Code & Codex Lifecycle Hooks · LongMemEval · Next.js*
   vector search and graph RRF, achieving **96.0% Recall@5 and 0.922 MRR across 246,750 turns**
   while capping session-start orientations at ≤1,500 tokens.
 - Achieved net token savings against raw context pasting, building a Next.js console to track
-  real-time system condition, retrieval quality, hook delivery status, token baselines and
-  deployment drift.
-
-### [RAG Chatbot with Self Auto-Ingestion (INTI-MBA Chatbot)](https://github.com/pmgwee/Ai-Chatbot)
-*FastAPI · LangGraph · LangChain · Hybrid RAG Retrieval · Pinecone · RapidOCR · APScheduler ·
-Docker · AWS EC2 · Next.js*
-
-- Engineered a LangGraph RAG agent implementing multi-query retrieval, LLM document grading
-  and query-rewriting self-correction, delivering cited answers grounded to source files
-  across 4 live Canvas LMS MBA courses.
-- Automated daily ingestion with APScheduler, keeping **215+ documents and 3,800+ searchable
-  passages** continuously up to date with zero manual uploads.
+  real-time system condition, retrieval quality, hook delivery status and deployment drift.
 
 ### [Autonomous Trending News AI Agent (BersamaAi)](https://github.com/pmgwee/BersamaAi-community)
 *GCP Compute Engine · Python · Agent Harness · Discord MCP · GLM-5.2 · Groq Whisper ASR ·
@@ -148,6 +151,16 @@ yt-dlp · GitHub Actions*
   enabling crash-safe resumption across sessions.
 - Built an automated looped evaluation layer delivering Playwright screenshot evidence for a
   top-tier model to perform code review at each delivery phase.
+
+### [RAG Chatbot with Self Auto-Ingestion (INTI-MBA Chatbot)](https://github.com/pmgwee/Ai-Chatbot)
+*FastAPI · LangGraph · LangChain · Hybrid RAG Retrieval · Pinecone · RapidOCR · APScheduler ·
+AWS EC2 · Next.js*
+
+- Engineered a LangGraph RAG agent implementing multi-query retrieval, LLM document grading
+  and query-rewriting self-correction, delivering cited answers grounded to source files
+  across 4 live Canvas LMS MBA courses.
+- Automated daily ingestion with APScheduler, keeping **215+ documents and 3,800+ searchable
+  passages** continuously up to date with zero manual uploads.
 
 ### [LLM-Backed Music Recommendation & Real-Time LLM Usage Tracker](https://github.com/pmgwee/ai-music-recommendations)
 *GLM-5.2 · Next.js · TypeScript · Supabase · YouTube API · GCP OAuth 2.0 · Telegram Bot ·
