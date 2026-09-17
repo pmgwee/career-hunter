@@ -335,11 +335,12 @@ function renderCover(payload, template) {
   const credentials = (payload.credentials || []).filter(Boolean).map(escapeHtml).join('<br>\n      ');
   const wordCount = paragraphs.join(' ').trim().split(/\s+/).filter(Boolean).length;
 
-  // A letter in this voice runs long -- the graduate-programme letters are ~700
-  // words against a 350-420 house target -- and the house rule for overflow is
-  // "tighten layout, never content". These are the exact values the approved bp
-  // and Maybank letters shipped at, so a long letter still lands on one page
-  // without rewording it. Default density is untouched.
+  // A letter in this voice runs long -- the approved letters are ~740-800 body
+  // words -- and the house rule for overflow is "tighten layout, never content".
+  // These are the exact values the approved bp and Maybank letters shipped at,
+  // so a long letter still lands on one page without rewording it. Default
+  // density is untouched. Compact is what makes ~800 words fit one A4 page, so a
+  // letter at that length MUST set "density": "compact" in its payload.
   const densityCss = payload.density === 'compact' ? `<style>
   body { font-size: 9.6pt; line-height: 1.19; }
   .name { font-size: 18pt; }
@@ -401,12 +402,29 @@ function main() {
 
   const report = { kind, template: templatePath, file: absOutput, counts, valid: true };
 
-  // The 350-420 body-word rule is a house rule (modes/_profile.md), so this
-  // reports the count rather than enforcing it — a deliberate 340-word letter is
-  // the author's call, but silently shipping a 700-word one is the failure mode
-  // the rule exists for.
-  if (kind === 'cover' && (counts.bodyWords < 350 || counts.bodyWords > 420)) {
-    report.warning = `Body is ${counts.bodyWords} words; house target is 350-420.`;
+  // Letter length is governed by ONE A4 PAGE, not by a word target. See
+  // modes/_custom.md → "Cover-letter length: the 350-420 band is wrong
+  // (set 2026-09-17, my words)", which supersedes the band in modes/_profile.md
+  // and modes/cover.md Step 6.
+  //
+  // Why this changed: the old 350-420 warning was treated as a target by two
+  // sessions in a row. Letters written at the right depth (EY 045 and NTT DATA
+  // 050) were trimmed down to hit it, and the trimming truncated sentence tails
+  // -- "before business value", "problems without a script", "something
+  // shippable" -- which the candidate read, correctly, as grammar errors. His
+  // own approved reference letters run ~740-800 body words on one A4 page at
+  // density "compact".
+  //
+  // So the only length worth flagging here is a letter that came out THIN, which
+  // almost always means a slot was dropped or a sentence was cut off mid-clause.
+  // Overflow is not this function's problem: generate-pdf.mjs --max-pages=1
+  // measures the real constraint after Chromium lays the page out.
+  if (kind === 'cover' && counts.bodyWords < 600) {
+    report.warning = `Body is ${counts.bodyWords} words, which is short for this voice. `
+      + `The approved letters run ~740-800 words on one page at density "compact". `
+      + `Check that no slot was dropped and no sentence was truncated mid-clause. `
+      + `Do NOT trim a letter to hit a word target -- see modes/_custom.md -> `
+      + `"Cover-letter length: the 350-420 band is wrong".`;
   }
 
   console.log(JSON.stringify(report, null, 2));

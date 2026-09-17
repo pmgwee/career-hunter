@@ -62,7 +62,14 @@
   .greeting { margin: 0 0 10pt; }
   .subject { font-weight: 700; text-decoration: underline; margin: 0 0 12pt; }
 
-  p { margin: 0 0 7pt; }
+  /* Body paragraphs are justified. This lives on `p` rather than only on
+     `.numbered` because the unnumbered openers are emitted as bare <p> — with
+     justification on `.numbered` alone, paragraphs 1 and 2 came out ragged-right
+     while 2., 3. and 4. were justified, which reads as a broken document
+     (reported 2026-09-15). Greeting, subject, closing and signature opt back out
+     below: they are single-line or address-style blocks, not prose. */
+  p { margin: 0 0 7pt; text-align: justify; }
+  .greeting, .subject, .closing, .signature { text-align: left; }
 
   /* Grid rather than a list so the number sits in its own fixed column and the
      justified text block keeps a clean left edge across wrapped lines. */

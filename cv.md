@@ -16,8 +16,8 @@ Johor, Malaysia · +6011-55095871 · perminggwee@gmail.com
      reordering, reframing and re-emphasising what this file already supports;
      it never introduces a claim that is not evidenced below. Hard ceiling: 3 lines. -->
 
-Computer Science graduate (Dean's List x3, CGPA 3.48) and MBA candidate with six months of
-fintech software engineering at iFAST Capital, where I translated a major Malaysian bank's
+Computer Science graduate (Dean's List x3, CGPA 3.48) and part-time MBA candidate targeting Data & AI Engineer roles, with
+six months of fintech software engineering at iFAST Capital, where I translated a major Malaysian bank's
 change requests into batch-ETL specifications and shipped an automated compliance job over
 millions of account records. Since then I have designed, deployed and instrumented four AI
 systems running in production on cloud infrastructure I maintain myself — hybrid RAG
@@ -28,7 +28,7 @@ retrieval, agent memory, LLM-as-a-Judge grading and multi-agent orchestration.
 ## Education
 
 **INTI International University** — Nilai / Kuala Lumpur · *June 2026 – Present*
-Master of Business Administration (Online Learning) — **CGPA 3.67**
+Master of Business Administration (Online Learning) — **CGPA 3.67 (First-Class Honors)**
 Online delivery; does not restrict full-time employment.
 
 **Universiti Sains Malaysia** — Gelugor, Penang · *Oct 2021 – Oct 2025*
@@ -36,7 +36,7 @@ Bachelor of Computer Science (Honours), Major in Software Engineering
 **CGPA 3.48 (Second Class Upper)** · **Dean's List — 3 consecutive semesters**
 
 **Kedah Matriculation College** — Changlun, Kedah · *Jan 2020 – Apr 2021*
-Physics, Chemistry, Computer Science
+Physics, Chemistry, Computer Science — **CGPA 3.92 (First-Class Honors)**
 
 ---
 
@@ -82,6 +82,14 @@ Spring Batch Pipelines, Requirements Gathering & Analysis
   CI/CD pipelines, change request management and production releases for both internal and
   external business-critical fintech systems.
 
+### Ski & Snowboard Technician (USA Work & Travel) — Ober Mountain
+*Gatlinburg, Tennessee · December 2025 – May 2026*
+
+- Worked in a diverse, multicultural team representing over 10 countries, adapting to a new
+  work environment by overcoming language barriers.
+- Recognized with 2 Honorable Mentions from manager for resolving complex customer issues
+  with technical expertise.
+
 ### Founder — Yierming Production (Studio)
 *Kuala Lumpur · May 2024 – December 2025*
 
@@ -90,14 +98,6 @@ Spring Batch Pipelines, Requirements Gathering & Analysis
 - Directed a four-digit budget commercial campaign for a Web3 brand (14K+ followers).
 - Delivered digital marketing strategies for a 400K-follower F&B brand, driving 10K+ Shopee
   sales for top products.
-
-### Ski & Snowboard Technician (USA Work & Travel) — Ober Mountain
-*Gatlinburg, Tennessee · December 2025 – May 2026*
-
-- Worked in a diverse, multicultural team representing over 10 countries, adapting to a new
-  work environment by overcoming language barriers.
-- Recognized with 2 Honorable Mentions from manager for resolving complex customer issues
-  with technical expertise.
 
 ---
 
@@ -143,15 +143,6 @@ yt-dlp · GitHub Actions*
 - Handled caption-less video via an ASR model on a daily GCP cron job that summarizes curated
   YouTube channel videos.
 
-### [Multi-Agent Routing Orchestration Claude Skills](https://github.com/pmgwee/Multi-Agent-Autopilot)
-*Agent Skills · JavaScript · Prompt Engineering · Playwright · MCP*
-
-- Architected a hands-off pipeline (kickstart, autopilot, UAT-runbook) chaining a top-tier
-  planning model with a cheaper CLI executor model, cutting manual prompting to zero and
-  enabling crash-safe resumption across sessions.
-- Built an automated looped evaluation layer delivering Playwright screenshot evidence for a
-  top-tier model to perform code review at each delivery phase.
-
 ### [RAG Chatbot with Self Auto-Ingestion (INTI-MBA Chatbot)](https://github.com/pmgwee/Ai-Chatbot)
 *FastAPI · LangGraph · LangChain · Hybrid RAG Retrieval · Pinecone · RapidOCR · APScheduler ·
 AWS EC2 · Next.js*
@@ -172,9 +163,18 @@ Tailwind CSS · Vercel*
 - Built a real-time dashboard tracking live LLM provider usage across subscription and API-key
   accounts, with a Telegram webhook triggering real-time notification alerts.
 
+### [Multi-Agent Routing Orchestration Claude Skills](https://github.com/pmgwee/Multi-Agent-Autopilot)
+*Agent Skills · JavaScript · Prompt Engineering · Playwright · MCP*
+
+- Architected a hands-off pipeline (kickstart, autopilot, UAT-runbook) chaining a top-tier
+  planning model with a cheaper CLI executor model, cutting manual prompting to zero and
+  enabling crash-safe resumption across sessions.
+- Built an automated looped evaluation layer delivering Playwright screenshot evidence for a
+  top-tier model to perform code review at each delivery phase.
+
 ---
 
-## Achievements
+## Awards & Honors
 
 - **Champion** — Young Entrepreneur Programme (YEP) 2025, MyPSA
 - **Champion** — Tech4Good SG Flagship 2024, ICMS-GovTech

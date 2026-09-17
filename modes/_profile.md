@@ -22,8 +22,16 @@
 | AI / Applied AI | Production AI with metrics, evaluation discipline, agent systems | Persistent Second Brain (96.0% Recall@5, 0.922 MRR) |
 | Data Engineering | iFAST batch-ETL specs, SQL optimization, compliance job, regulated data | iFAST compliance job (~100,000 rows, millions of records) |
 | Cloud / Platform | Self-run GCP + AWS production infra, CI/CD, GitHub Actions cron, Docker | BersamaAi (GCP VM + GitHub Actions every 3 hours) |
-| Graduate Programme | CGPA 3.48 + Dean's List x3 + MBA 3.67, breadth, competition record, multicultural work | Academics first, then Champion x2 |
+| Graduate Programme | CGPA 3.48 + Dean's List x3 + MBA 3.67 (First-Class Honors) + Matriculation 3.92 (First-Class Honors), breadth, competition record, multicultural work | Academics first, then Champion x2 |
 | Consulting (EY, Accenture) | Change-request translation, UAT, stakeholder count (14 devs / 4 directors), MBA | iFAST requirements-translation bullet |
+
+### Banking / fintech proof point (user-stated 2026-09-16)
+
+When a banking or fintech application calls for industry context, connect the iFAST experience
+to the investment and trading platforms and the external bank fund-management project I already
+worked around, alongside the regulated-data and change-request work already recorded in `cv.md`.
+Frame this as banking-adjacent experience I have acquired and can contribute from, without naming
+the external client bank.
 
 ## Your Exit Narrative
 
@@ -47,26 +55,35 @@ numbers on their own retrieval engine. Frame as **"builder with measurement disc
 ## Tailoring Rules (learned through ~10 real applications — do not relearn these)
 
 ### Summary line
-- **Never** write "targeting X roles" unless the role title matches the posting exactly.
+- Name the target role family plainly, using the JD's function where appropriate rather than
+  hiding behind a generic tech label. The function-based AI/data wording below may differ from
+  a deliberately generic posting title.
 - Hard ceiling of **3 lines**. Two is better.
 - Lead with what the employer weights most: academics for graduate schemes, shipped production
   systems for engineering roles.
 - Name concrete context over generic phrasing — *"a major Malaysian bank's platform"* beats
   *"business-critical software."*
+- **AI/data target wording:** For a combined AI and data engineering function, use the preferred
+  lead form **"Computer Science graduate and part-time MBA candidate targeting Data & AI Engineer
+  roles"**. When the application needs an explicit level, use **"targeting fresh graduate/entry-level
+  AI and Data Engineer roles"** or the JD's exact combined form, instead of the generic
+  **"fresh graduate/entry-level tech role"**.
 
 ### Section order by role type
 
 | Role type | Order |
 |---|---|
-| Consulting (EY, Accenture) | Summary → Education → Skills → Experience → **Achievements** → Projects → Volunteering |
-| Enterprise IT / energy (ExxonMobil, PETRONAS) | Summary → Education → Skills → Experience → Projects → Achievements → Volunteering |
-| AI / engineering (Deriv, Grab, MoneyLion) | Summary → Skills → **Projects** → Experience → Education → Achievements |
+| Consulting (EY, Accenture) | Summary → Education → Skills → Experience → Projects → **Awards & Honors** → Volunteering |
+| Enterprise IT / energy (ExxonMobil, PETRONAS) | Summary → Education → Skills → Experience → Projects → **Awards & Honors** → Volunteering |
+| AI / engineering (Deriv, Grab, MoneyLion) | Summary → Skills → **Projects** → **Awards & Honors** → Experience → Education |
 
 Rule of thumb: **Experience above Projects** for consulting and enterprise;
 **Projects above Experience** wherever the posting says any version of *"show me what you've built."*
 
 Within Experience, use **relevance order**, not strict reverse-chronological:
-iFAST → Ober Mountain → Yierming Production. (For AI/engineering roles, cut Ober Mountain.)
+iFAST → Ober Mountain → Yierming Production whenever Ober Mountain is included. If a role-specific
+cut is needed, Ober may be omitted only under the standing cut rules, but it must remain immediately
+below iFAST whenever it is present.
 
 ### Skills line
 - Reorder so the **employer's own vocabulary appears first**.
@@ -115,9 +132,16 @@ person's name for a direct approach) → bold underlined subject line in caps �
 - No generic pledges ("guarantee 100% effort") — they carry no information.
 - Any emotional appeal goes **last**, after the evidence, and appears **once only**.
 - Keep contractions consistent; don't mix "I have" and "I've".
-- **Target 350–420 words of body** (header and credentials not counted). This is the
+- ~~**Target 350–420 words of body** (header and credentials not counted). This is the
   career-ops house rule from `modes/cover.md` Step 6, not a preference — the cover mode
-  reports whether the draft hit it. The Deriv letter ran ~700 and paragraph 4 lost the reader.
+  reports whether the draft hit it. The Deriv letter ran ~700 and paragraph 4 lost the reader.~~
+  **SUPERSEDED 2026-09-17** by `modes/_custom.md` → "Cover-letter length: the 350-420 band is
+  wrong (set 2026-09-17, my words)". **Length is governed by one A4 page, not by a word count.**
+  The approved reference letters run **~740–800 body words** on one page at `"density": "compact"`.
+  Struck in place rather than deleted, because this line was read as a target by two sessions in a
+  row and caused the EY 045 and NTT DATA 050 letters to be trimmed into truncated sentence tails.
+  The same band in `modes/cover.md` Step 6 is superseded too; that file is system-layer and is not
+  edited here, but `_custom.md` is always loaded alongside it and wins.
 
 ### Recurring grammar failure modes — check every draft
 - Comma splices where a colon belongs.
@@ -148,6 +172,19 @@ person's name for a direct approach) → bold underlined subject line in caps �
 
 - **Malaysia:** citizen, no sponsorship needed. Kuala Lumpur / Klang Valley preferred, open
   anywhere in Malaysia.
+- **Singapore screening filter — check these two before spending an evaluation (added 2026-09-15):**
+  1. **"Traineeship" + "Singapore Citizen or Permanent Resident"** = Singapore's **GRIT**
+     (Graduate Industry Traineeships) scheme or an equivalent. The government funds 70% of the
+     allowance, so citizenship is a **condition of public funding**, not an employer preference.
+     There is no exemption and nobody at the company can grant one. **Hard stop, stop at Block A.**
+     Seen at Circles (report 026). Distinct from Cognizant (report 025), where a company-set
+     eligibility rule at least left an exemption worth asking about.
+  2. **Monthly pay below S$5,600** = no Employment Pass is obtainable, whatever the employer
+     intends. 2026 minimums, general sector, age 23 and under: **EP S$5,600**, **S Pass S$3,300**
+     (quota-limited and levied). A graduate band under the EP floor turns "would they sponsor?"
+     into "they cannot." Ask the monthly base early on any Singapore application.
+     Cleared comfortably by TikTok (#21, S$6,463–12,779). Uncertain at Infosys (#22). Failed by
+     Cognizant (#25, ~S$3,830–4,080) and Circles (#26, S$1,800–2,400).
 - **Singapore and elsewhere:** would require sponsorship (EP). A JD stating "no sponsorship"
   is a **hard blocker** — flag it in Block A.
 - Remote roles based outside Malaysia: acceptable only if the employer can engage a Malaysian

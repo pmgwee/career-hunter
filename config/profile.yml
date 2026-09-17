@@ -41,6 +41,7 @@ candidate:
 
 target_roles:
   primary:
+    - "Data & AI Engineer"
     - "AI Engineer"
     - "Applied AI Engineer"
     - "Machine Learning Engineer"
