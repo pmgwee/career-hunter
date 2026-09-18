@@ -12,7 +12,9 @@ import { assembleDedupContext } from "@/lib/core/discover";
 // cannot persist; the only writes happen when the user later ADDs a candidate.
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
-export const maxDuration = 600;
+// Hobby-plan deployments cap Serverless Functions at 300 seconds. Leave a
+// small response/cleanup buffer before Vercel's hard cutoff.
+export const maxDuration = 300;
 
 type CodexCapabilityCacheEntry = {
   mtimeMs: number;
@@ -325,7 +327,7 @@ export async function POST(req: Request) {
       let codexStderr = "";
       killer = setTimeout(() => {
         terminateChild();
-      }, 480_000);
+      }, 285_000);
       const safeClose = () => {
         if (!closed) {
           closed = true;
