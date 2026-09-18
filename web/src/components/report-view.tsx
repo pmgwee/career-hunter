@@ -12,6 +12,7 @@ import { ScoreMethodology } from "@/components/score-methodology";
 import { GeneratePdfButton } from "@/components/generate-pdf-button";
 import { ApplyButton } from "@/components/apply-button";
 import { DeleteFromTracker } from "@/components/delete-from-tracker";
+import { PageFrame } from "@/components/page-frame";
 
 // Progressive disclosure of the report. The core writes prose blocks
 // "## F) Verdict (lead)", "## A) Role Summary", "## B) Match with CV", then
@@ -68,7 +69,7 @@ export function ReportView({
   const url = field("URL");
 
   return (
-    <div className="mx-auto max-w-3xl px-6 py-8">
+    <PageFrame>
       <Link
         href="/pipeline"
         className="inline-flex items-center gap-1.5 text-sm text-muted transition-colors hover:text-brand"
@@ -133,7 +134,7 @@ export function ReportView({
             // before, so an old/odd report never loses content.
             if (sections.length === 0) {
               return (
-                <article className="report-prose mt-8">
+                <article className="report-prose mt-8 max-w-4xl">
                   <ReactMarkdown remarkPlugins={[remarkGfm]}>{meta?.body ?? report}</ReactMarkdown>
                 </article>
               );
@@ -148,7 +149,7 @@ export function ReportView({
             const mainSections = rest.filter((s) => !isMachine(s.heading));
             const anyAB = mainSections.some((s) => s.letter === "A" || s.letter === "B");
             return (
-              <div className="mt-8">
+              <div className="mt-8 max-w-4xl">
                 {intro && (
                   <article className="report-prose">
                     <ReactMarkdown remarkPlugins={[remarkGfm]}>{intro}</ReactMarkdown>
@@ -218,6 +219,6 @@ export function ReportView({
           No report file found for #{id} in <code className="text-foreground">reports/</code>.
         </div>
       )}
-    </div>
+    </PageFrame>
   );
 }

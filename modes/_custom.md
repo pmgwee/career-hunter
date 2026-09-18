@@ -151,6 +151,46 @@ sits *above* Projects — but that now follows automatically, since Work Experie
 after Work Experience. Under the old rule that read as a defect; under this rule it was correct, so
 043 needs no fix on this axis.
 
+### Project order and AI Technologies placement (set 2026-09-18, my words)
+
+> "personal , second brain, ai new, rag , multiagent do in this order"
+>
+> "always put ai technologies at second in skills section"
+>
+> "remember for future tailoring also"
+
+Both are standing rules, not one-off choices for the Xiaomi resume — I said so explicitly.
+
+**1. Project order is fixed:**
+
+| # | Project | `cv.md` heading |
+|---|---|---|
+| 1 | Personal | Personal Always-On AI Agent (Hermes + Real-Ming Operations Layer) |
+| 2 | Second Brain | Cross-Agent Context Engineering with Persistent Second Brain |
+| 3 | AI News | Autonomous Trending News AI Agent (BersamaAi) |
+| 4 | RAG | RAG Chatbot with Self Auto-Ingestion (INTI-MBA Chatbot) |
+| 5 | Multi-Agent | Multi-Agent Routing Orchestration Claude Skills |
+
+This is `cv.md`'s stored order with the Music project cut, and it keeps Multi-Agent last, so it is
+consistent with **Standing CV Defaults** ("do not reorder") and with the 2026-09-16 rule pinning
+Multi-Agent to the end. What it *changes* is that projects are **no longer re-ranked for JD
+relevance**. Several recent payloads did re-rank them — 057 TNG Digital and the first cut of 059
+Xiaomi both led with the RAG chatbot because its scheduled ingestion was closest to the JD. Do not
+do that any more; the order above is the order.
+
+**Where Music goes.** It stays on the sanctioned cut list and is still the first thing cut for space.
+When it is included — under "Filling page 2: add a project rather than leave slack" — insert it
+**before Multi-Agent**, which still goes last whenever present. *Agent's reading, marked as an
+inference per the convention at the top of this file: I placed Music at slot 5 (after RAG, before
+Multi-Agent) because that is where `cv.md` stores it and it satisfies the Multi-Agent pin. Correct
+this if you want it somewhere else.*
+
+**2. AI Technologies is always the second Skills row.** Whatever the posting is. On 059 Xiaomi I had
+demoted it to last, reasoning that a pure data-warehouse JD names no AI requirement — that reasoning
+is now overruled by this rule. Slot 2 is fixed; the other four slots are still reordered for the
+employer's vocabulary, and **items inside each row are never reordered** (Standing CV Defaults,
+2026-09-14).
+
 ### What a tailored resume may still change
 
 Only these four, and nothing else, unless I say so:
