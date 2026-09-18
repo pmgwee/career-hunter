@@ -1,0 +1,84 @@
+   GWEE PER MING
+
+76, Taman Muhibbah, 84400 Sungai Mati, Tangkak, Johor· +6011 5509 5871
+              Portfolio | Linkedin | Github | Gmail | +6011-55095871
+
+Manager of Human Resource Department           23rd July 2026
+Experian Malaysia Sdn Bhd
+Ground Floor, Quill 18,
+Lingkaran Teknokrat 3 Barat, 63000 Cyberjaya,
+Selangor, Malaysia
+
+Dear Sir / Madam,
+
+APPLICATION FOR THE GRADUATE PROGRAM IN TECHNOLOGY & ANALYTICS
+
+I am writing to express my interest in the Graduate Program in Technology & Analytics
+at Experian. I recently graduated with a Bachelor of Computer Science, Major in Software
+Engineering from Universiti Sains Malaysia, and am currently furthering my studies
+through a Master of Business Administration at INTI International University. Having
+just completed a Work Abroad Travel Program in the United States from December 2025
+to May 2026, I am now available and ready to commence full-time employment from
+August 2026.
+
+2. Throughout my undergraduate studies, I was placed on the Dean's List for three
+consecutive semesters, a standard of discipline I continue to build on through my
+ongoing MBA. My most defining professional experience was my Software Engineer
+Intern attachment at iFAST Capital Sdn Bhd, where I architected automated scheduled
+Spring Batch jobs using Java Spring Boot to streamline company operational efficiency,
+and worked directly with the project director to elicit change request requirements for
+a fintech solution serving one of Malaysia's largest banks, delivering stakeholder
+specifications with end-to-end enhancements across the front-end, back-end, and batch
+job layers. I also collaborated with 14 developers and 4 project directors to manage
+monthly Agile sprint cycles, SDLC processes, and CI/CD pipelines for critical internal and
+external production releases. That same problem-solving instinct drove me to
+independently design and build five personal projects: a 3D Animation Portfolio Website
+(MingCreatives) where I resolved a critical CLS regression from 4.69 to 0, lifting the
+Vercel Real Experience Score from 65 to 100 across 200 real-user sessions, and
+engineered an SEO/AEO/GEO system that ranked #1 on Google for target keywords
+within a month of launch at zero ad spend; a Realtime AI Usage & Personal Finance
+Platform (DuitSini) that streams live Agent usage data into a dashboard, where I resolved
+a production API rate-ceiling outage to eliminate a recurring lockout, and built finance
+trackers across bills and stocks that power an automated Telegram reminder system and
+a parallel equities-research pipeline; an AI Knowledge Assistant powered by a
+LangGraph RAG agent implementing multi-query retrieval, LLM document grading, and
+query-rewriting self-correction, automatically keeping over 3,800 searchable passages
+up to date across four live courses; an AI Community Platform (BersamaAi) featuring a
+Discord bot paired with an MCP server that exposes Discord as tools to AI agents,
+automatically curating trending AI news via a GLM judge and transcribing caption-less
+videos with Groq Whisper into shareable summary cards; and a Multi-Agent Autopilot
+that chains a top-tier planning model with a cheaper CLI executor model to run hands-
+off, enabling crash-safe resumption across sessions and an automated evaluation loop
+that feeds Playwright screenshot evidence back for code review. This hands-on build-
+and-ship experience across data, automation, and AI-powered systems is what sparked
+my strong interest in Technology, Analytics, and GenAI, the exact areas this program is
+built around.
+
+3. My active participation in numerous hackathons and entrepreneurship
+competitions has further sharpened my leadership, adaptability, and problem-solving
+skills, and taught me how to deliver a working MVP under pressure within tight
+timeframes. This is reflected in my track record: Champion at the Young Entrepreneur
+Programme (YEP) 2025 by MyPSA, Champion at Tech4Good SG Flagship 2024 by ICMS-
+GovTech, Third Prize at the Huawei ICT Innovation Track 2024, Second Prize at the
+Blockchain For Good Malaysia Inter-Varsity Hackathon 2023 by UTM-Algohub, Finalist
+at the Payhack 24-Hour Hackathon 2023 by PayNet, and 5th Place & Best Business Idea
+Award at the International Varsity Hackathon 2023 by USM. Each of these experiences
+reinforced the same digital fluency, collaboration, and innovation this Graduate Program
+is looking to build on.
+
+4. I hope this letter is able to highlight my enthusiasm in working for your company
+as an fresh graduate, and I am willing to learn more technical skills and working
+experience within the field of software development than I currently possess.I look
+forward to the opportunity to discuss my qualifications in more detail. Please feel free
+to contact me at +6011-55095871 or via email at perminggwee@gmail.com to schedule
+an interview.
+
+Thank you in advance for your kind consideration.
+
+Sincerely,
+
+GWEE PER MING
+Bachelor of Computer Science (Honours)
+Universiti Sains Malaysia
++601155095871
+

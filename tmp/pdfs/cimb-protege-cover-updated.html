@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Gwee Per Ming — Cover Letter</title>
+<style>
+  /* Traditional business-letter cover template.
+     Structure follows the archive format: personal letterhead, recipient block
+     with the date aligned right, formal greeting, underlined uppercase subject,
+     then four paragraphs where the first is unnumbered and the rest are 2. 3. 4.
+
+     Serif here is deliberate and is NOT an inconsistency with the sans-serif CV:
+     the letter is read by a person, the CV is parsed by an ATS first. Ligatures
+     are still disabled so pasted-back text extracts cleanly either way. */
+  @page { size: A4; margin: 0.6in; }
+  * { box-sizing: border-box; }
+  html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+
+  body {
+    margin: 0;
+    color: #1a1a1a;
+    background: #ffffff;
+    font-family: "Times New Roman", Times, serif;
+    font-size: 10.5pt;
+    line-height: 1.36;
+    font-variant-ligatures: none;
+    font-feature-settings: "liga" 0, "clig" 0, "dlig" 0;
+  }
+
+  .letter { width: 100%; max-width: 7.27in; margin: 0 auto; }
+
+  .header { text-align: center; }
+
+  .name {
+    color: #5b87b5;
+    font-size: 24pt;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    line-height: 1.1;
+    text-transform: uppercase;
+  }
+
+  .address, .contact { color: #666; font-size: 8.7pt; line-height: 1.35; }
+  .contact a { color: #7551a3; text-decoration: underline; }
+
+  .divider { border: 0; border-top: 0.6pt solid #bdbdbd; margin: 7pt 0 14pt; }
+
+  .recipient-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 18pt;
+    margin-bottom: 8pt;
+  }
+
+  .recipient { line-height: 1.32; }
+  /* Addressee and date are one size up from the body so the letter's two
+     orienting facts — who it is for, and when — are findable at a glance. */
+  .recipient strong { font-weight: 700; font-size: 11.5pt; }
+  .date { white-space: nowrap; font-size: 11.5pt; font-weight: 700; }
+
+  .greeting { margin: 0 0 10pt; }
+  .subject { font-weight: 700; text-decoration: underline; margin: 0 0 12pt; }
+
+  /* Body paragraphs are justified. This lives on `p` rather than only on
+     `.numbered` because the unnumbered openers are emitted as bare <p> — with
+     justification on `.numbered` alone, paragraphs 1 and 2 came out ragged-right
+     while 2., 3. and 4. were justified, which reads as a broken document
+     (reported 2026-09-15). Greeting, subject, closing and signature opt back out
+     below: they are single-line or address-style blocks, not prose. */
+  p { margin: 0 0 7pt; text-align: justify; }
+  .greeting, .subject, .closing, .signature { text-align: left; }
+
+  /* Grid rather than a list so the number sits in its own fixed column and the
+     justified text block keeps a clean left edge across wrapped lines. */
+  .numbered {
+    display: grid;
+    grid-template-columns: 18pt 1fr;
+    column-gap: 0;
+    text-align: justify;
+  }
+
+  .number { text-align: left; }
+  .closing { margin-top: 3pt; }
+  .signature { margin-top: 10pt; line-height: 1.28; }
+  .signature strong { font-weight: 700; }
+</style>
+<style>
+  body { font-size: 9.6pt; line-height: 1.19; }
+  .name { font-size: 18pt; }
+  .divider { margin: 6pt 0 11pt; }
+  .recipient { line-height: 1.26; }
+  .recipient strong, .date { font-size: 11pt; }
+  .greeting { margin: 0 0 8pt; }
+  .subject { margin: 0 0 10pt; }
+  p { margin: 0 0 6pt; }
+  .signature { margin-top: 8pt; line-height: 1.2; }
+</style>
+</head>
+<body>
+  <main class="letter">
+    <header class="header">
+      <div class="name">GWEE PER MING</div>
+      <div class="address">76, Taman Muhibbah, 84400 Sungai Mati, Tangkak, Johor</div>
+      <div class="contact">
+        <a href="https://www.mingcreatives.com/">Portfolio</a> |
+        <a href="https://www.linkedin.com/in/gweeperming">LinkedIn</a> |
+        <a href="https://github.com/pmgwee">GitHub</a> |
+        <a href="mailto:perminggwee@gmail.com">Gmail</a> |
+        +6011-55095871
+      </div>
+    </header>
+
+    <hr class="divider">
+
+    <section class="recipient-row">
+      <div class="recipient"><strong>The Hiring Team, Group Human Resources,</strong><br>
+        CIMB Bank Berhad<br>
+        Menara CIMB<br>
+        Jalan Stesen Sentral 2, Kuala Lumpur Sentral<br>
+        50470 Kuala Lumpur, Malaysia</div>
+      <div class="date">16th September 2026</div>
+    </section>
+
+    <p class="greeting">Dear Sir / Madam,</p>
+    <p class="subject">APPLICATION FOR PROTEGE APPRENTICE AT CIMB BANK</p>
+
+    <p>I am applying for the PROTEGE Apprentice role at CIMB Bank. I hold a Computer Science degree from Universiti Sains Malaysia and gained practical engineering experience through a fintech internship. I am currently pursuing a flexible online MBA at INTI, am available for full-time work on immediate notice, and am targeting a fresh graduate/entry-level banking operations role to start my career.</p>
+
+    <p>My interest in banking comes from the six months I spent at iFAST Capital delivering change requests for a major Malaysian bank, which showed me that the parts of a bank a customer never sees are where most of the real complexity sits. I also see how quickly everyday banking here has moved onto digital channels, which tells me that anyone entering the industry now will need to understand both the operational rules and the tools replacing the manual work. Therefore, this programme drives my intention to apply, because learning how a bank actually runs is the foundation I want underneath my technical work.</p>
+
+    <p class="numbered"><span class="number">2.</span><span>My last working experience was a Software Engineer internship at iFAST Capital, where the work that shaped me most was a compliance job over sensitive client account records, which had to apply the right transaction restrictions, preserve an audit trail and send the correct notifications without manual handling. Sitting between business change and engineering taught me that requirements come first and the technical work follows, and that trust comes from listening carefully, agreeing clearly, and staying accountable through release. That is the habit I want to bring when working with the business and operations colleagues I would be assigned to.</span></p>
+
+    <p class="numbered"><span class="number">3.</span><span>I am interested in learning the operational side of a bank properly, because it is the part of the industry my engineering work has only touched from the outside, while AI remains my personal passion, and my own projects have taken me deep into agentic tools I would want to bring into the operational workflow this programme assigns. Another attraction point is that CIMB runs this as a national employability scheme rather than ordinary recruitment, which tells me the training is the point.</span></p>
+
+    <p class="numbered"><span class="number">4.</span><span>The USA Work &amp; Travel programme taught me to communicate and solve problems beside colleagues from more than ten nationalities. Hackathons taught me to learn fast, decide under time pressure and defend the result clearly. If you are open to a fresh graduate who is familiar with AI skillsets and agentic tools and wants to learn how a bank actually runs from the inside, I would like to talk.</span></p>
+
+    <p class="closing">Thank you in advance for your kind consideration.</p>
+
+    <p class="signature">Sincerely,<br><br>
+      <strong>GWEE PER MING</strong><br>
+      Bachelor of Computer Science (Honours)<br>
+      Universiti Sains Malaysia<br>
+      +6011-55095871
+    </p>
+  </main>
+</body>
+</html>

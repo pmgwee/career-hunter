@@ -1,0 +1,129 @@
+                      Gwee Per Ming                                                                 June 2026 ­ Present
+                                                                                                    Nilai, Kuala Lumpur
+                                5x Hackathon Winner, 2x Champion, INTI MBA                          Oct 2021 ­ Oct 2025
+
+                                            Portfolio | Linkedin | Github | Gmail | +6011-55095871       Gelugor, Penang
+                                                                                                    Jan 2020 ­ Apr 2021
+Education
+                                                                                                        Changlun, Kedah
+INTI International University
+Master of Business Administration (Online Learning)
+Universiti Sains Malaysia
+Bachelor of Computer Science, Major in Software Engineering
+Kedah Matriculation College
+Physics, Chemistry, Computer Science
+
+Skills
+
+Programming Languages: Python, SQL, TypeScript, JavaScript (ES6), Java, HTML, CSS
+
+AI Technologies:          RAG, LangGraph, Agent Skills, Orchestration, Prompt Engineer, MCP, Embedding, Agent
+                          memory, FAISS, Pinecone, Chunking
+
+Frameworks & Tools:       FastAPI, Rest API, Excel, Git, Gitlab, Github Actions, AWS, GCP, MongoDB, Prisma, Oracle DB,
+                          Postman, Jenkins, Cursor, Replit ai, React, Next.js, Node.js, Spring Boot, Vercel, Tailwind CSS,
+                          ShadcnUi, Angular, Framer-motion, GSAP, lenis, Bootstrap, SASS, NGXS, Ng-Zorro, FileZilla,
+                          Flutter, Figma, Adobe
+
+Spoken Language:          Mandarin(Native), English, Malay
+
+Experiences
+
+Founder                                                                                             May 2024 ­ Present
+
+Yierming Production(Studio)                                                                         Kuala Lumpur
+
+· Directed a four-digit budget commercial campaign for a Web3 brand (14K+ followers), including product and marketing
+   content production
+
+· Delivered digital marketing strategies for a 400K-follower F&B brand, driving 10K+ Shopee sales for top products
+
+· Designed and launched branding and web content for an AI education startup led by ex-Tech Company AI Director
+
+Software Engineer Intern                                                                            March 2024 ­ August 2024
+
+iFAST Capital Sdn Bhd                                                                               Bukit Bintang, Kuala Lumpur
+
+· Architected automated scheduled Spring Batch jobs using Java Spring Boot to address real-world company issues and
+   streamlining company operational efficiency
+
+· Worked with the project director to elicit change request requirements for a fintech solution that serving Malaysia's 4th
+
+largest bank, delivering stakeholder specifications with end-to-end enhancement through front-end, back-end, and
+batch job
+
+· Collaborated with 14 developers and 4 project directors to manage monthly Agile sprint cycles, SDLC processes, and
+   CI/CD pipelines for critical internal and external production releases
+
+Projects
+
+3D Animation Portfolio Website (MingCreatives)
+Tech: Next.js, Tailwind CSS, GSAP, Lenis, Framer Motion, AWS S3, AWS CloudFront, Vercel
+
+  · Resolved a critical CLS regression from 4.69  0 by tracing root cause, improving Vercel Real Experience Score from 65
+      100 across 200 real-user sessions on production
+
+  · Engineered SEO/AEO/GEO system that ranked #1 on Google search result for keyword terms (e.g. "3D animation
+     website Muar," "Gwee Per Ming") within a month of domain launch and zero ad spend
+Realtime AI Usage & Personal Finance Platform (DuitSini)
+Tech: Next.js, TypeScript, Supabase, GCP Youtube API, GCP OAuth2.0, Telegram Bot, Tailwind CSS, Vercel
+· Architected a realtime dashboard for live Agent usage data, resolved an API rate-ceiling outage, eliminating the rate-
+
+     limiting lockout.
+· Built the finance core trackers across bills and stocks that automates Telegram bot to sent statement reminders and
+
+     powers an equities-research pipelines composing external sources in parallel.
+
+AI Knowledge Assistant (INTI-MBA Chatbot)
+
+Tech: FastAPI, LangGraph, LangChain, Pinecone, Next.js, TypeScript, RapidOCR
+  · Engineered a LangGraph RAG agent implementing multi-query retrieval, LLM document grading and query-rewriting
+     self-correction, delivering cited answers grounded to source file across 4 Canvas LMS MBA courses
+  · Automated daily ingestion with APScheduler across 4 live courses, keeping 215+ documents and 3,800+ searchable
+     passages continuously up to date with zero manual uploads
+
+AI Community Platform with Content Pipelines (BersamaAi)
+
+Tech: Python, Discord bot, GLM-5.2 (Z.ai), Groq Whisper, yt-dlp, GitHub Actions, GCP Compute Engine
+  · Built a Discord event bot alongside an MCP server exposing Discord as tools to AI agents
+  · Built a fully automated content engine that picks trending AI news from top sources via a GLM judge, posting each item
+     as a card to the matching topic channel on Discord
+  · Handled caption-less social video by transcribing its audio via Groq Whisper, then summarizing and posting each as a
+     card from a single share link
+
+Multi-Agent Autopilot (Claude Skills)
+
+Tech: Agent Skills, Javascript, Prompt Engineering, Playwright, MCP
+  · Architected hands-off pipeline (kickstart, autopilot, UAT-runbook) chaining a top-tier planning model with a cheaper
+     CLI executor model, cutting manual prompting to zero and enabling crash-safe resumption across sessions
+  · Built a automated looped evaluation layer by delivering Playwright screenshot evidence for top-tier model to do code
+     review at each delivery phase
+
+Volunteering
+
+Luarlah Cultural Liaison                                                                Oct 2025
+
+· Bridged urban participants with Orang Asli communities through indigenous cultural immersion, supporting Luarlah's
+
+mission to reconnect Malaysia's 73% urban population with rural heritage.
+
+EPIC Homes House Builder                                                                Jul 2025
+
+· Completed a 3-day modular home build for an Orang Asli family, contributing to 350+ homes delivered nationwide to
+   address a housing crisis affecting 12,000+ families.
+
+Sea Turtle Research Unit (SEATRU) Conservation Field Volunteer                          Jul 2025
+
+· Conducted nocturnal beach patrols, turtle tagging, and nest monitoring to improve hatchling survival against natural
+
+odds of 1 in 1,000, within a programme engaging 5,700+ individuals from 36 countries.
+
+Achievements
+
+Champion - Young Entrepreneur Programme (YEP) 2025, MyPSA
+Champion - Tech4Good SG Flagship 2024, ICMS-GovTech
+Third Prize ­ Huawei ICT Innovation Track 2024, Huawei
+Second Prize - Blockchain For Good Malaysia Inter-Varsity Hackathon 2023 , UTM-Algohub
+Finalist - Payhack 24-Hour Hackathon 2023, PayNet
+5th Place & Best Business Idea Award - International Varsity Hackathon 2023, USM
+

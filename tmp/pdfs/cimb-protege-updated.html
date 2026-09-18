@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gwee Per Ming — CV</title>
+<style>
+  /* Tailored CV template — house layout.
+     Typography, spacing and divider system are inherited from the career-ops
+     ATS-safe template on purpose: a static system sans stack (no bundled
+     webfonts) and ligatures disabled, because headless Chromium substitutes
+     fi/fl/ffi with U+FB01..3 at layout time and PDF text extractors — what an
+     ATS reads — decode them back, so "verification" is extracted as
+     "veriﬁcation" and a literal keyword search misses it.
+
+     Color carries meaning here, and only these two roles:
+       blue + underline = clickable (contact links, project titles)
+       purple           = organization name, never a link
+     Keep that invariant. A purple link or a blue company name breaks the one
+     cue a reader has for what is safe to click. */
+  :root {
+    --accent-color: hsl(187 74% 32%);
+    --link-color: #1a56a0;
+    --org-color: hsl(270, 70%, 45%);
+    --font-family: "Liberation Sans", 'Helvetica Neue', Arial, 'DejaVu Sans', sans-serif;
+    --font-size: 11px;
+    /* Must match generate-pdf.mjs's PDF_PAGE_MARGIN — the real page margin comes
+       from the @page rule that script appends, which reads this same variable. */
+    --page-margin: 0.6in;
+  }
+  @page { margin: var(--page-margin); }
+
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-variant-ligatures: none;
+    font-feature-settings: "liga" 0, "clig" 0, "dlig" 0;
+  }
+
+  html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+
+  body {
+    font-family: var(--font-family);
+    font-size: var(--font-size);
+    line-height: 1.5;
+    color: #1a1a2e;
+    background: #ffffff;
+  }
+
+  .page { width: 100%; max-width: 210mm; margin: 0 auto; padding: 2px 0; }
+
+  /* === HEADER === */
+  .header { margin-bottom: 20px; text-align: center; }
+
+  .header h1 {
+    font-size: 28px;
+    font-weight: 700;
+    color: #1a1a2e;
+    letter-spacing: -0.02em;
+    margin-bottom: 6px;
+    line-height: 1.1;
+  }
+
+  .header-gradient {
+    height: 2px;
+    background: linear-gradient(to right, var(--accent-color), var(--org-color));
+    border-radius: 1px;
+    margin-bottom: 10px;
+  }
+
+  .contact-row {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px 14px;
+    font-size: 10.5px;
+    line-height: 1.4;
+    color: #555;
+  }
+
+  .contact-row a { color: var(--link-color); text-decoration: underline; }
+  .contact-row .separator { color: #ccc; }
+
+  /* Links must never break across lines. */
+  a { white-space: nowrap; }
+
+  /* === SECTIONS === */
+  .section { margin-bottom: 18px; }
+
+  .section-title {
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--accent-color);
+    border-bottom: 1.5px solid #e2e2e2;
+    padding-bottom: 4px;
+    margin-bottom: 10px;
+    line-height: 1.2;
+  }
+
+  /* === SUMMARY === */
+  .summary-text { font-size: var(--font-size); line-height: 1.7; color: #2f2f2f; }
+
+  /* === SKILLS === */
+  .skill-item { font-size: 10.5px; color: #444; }
+  .skill-category { font-weight: 600; color: #333; }
+
+  /* === PROJECTS === */
+  .project { margin-bottom: 12px; }
+
+  .project-title {
+    font-size: 11.5px;
+    font-weight: 600;
+    color: var(--link-color);
+  }
+
+  .project-title a { color: inherit; text-decoration: underline; }
+
+  .project-bullets { padding-left: 18px; margin-top: 3px; }
+
+  .project-bullets li {
+    font-size: 10.5px;
+    line-height: 1.55;
+    color: #333;
+    margin-bottom: 3px;
+  }
+
+  /* Tech stack sits last, below the bullets. */
+  .project-tech { font-size: 9.5px; color: #888; margin-top: 3px; }
+
+  /* === EXPERIENCE / VOLUNTEERING === */
+  .job { margin-bottom: 14px; }
+
+  .job-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 12px;
+    margin-bottom: 4px;
+  }
+
+  .job-company { font-size: 12.5px; font-weight: 600; color: var(--org-color); }
+  .job-period { font-size: 10.5px; color: #777; white-space: nowrap; }
+  .job-role { font-size: var(--font-size); font-weight: 600; color: #333; margin-bottom: 6px; }
+  .job-location { font-size: 10px; color: #888; }
+  .job ul { padding-left: 18px; margin-top: 6px; }
+
+  .job li {
+    font-size: 10.5px;
+    line-height: 1.6;
+    color: #333;
+    margin-bottom: 4px;
+  }
+
+  /* Volunteering reuses the experience rhythm with a lighter title weight, so it
+     reads as supporting material rather than a second employment history. */
+  .volunteer-item { margin-bottom: 10px; }
+  .volunteer-title { font-size: 11.5px; font-weight: 600; color: #333; }
+
+  /* === EDUCATION === */
+  .edu-item { margin-bottom: 8px; }
+
+  .edu-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 12px;
+  }
+
+  .edu-title { font-weight: 600; font-size: var(--font-size); color: #333; }
+  .edu-org { color: var(--org-color); font-weight: 500; }
+  .edu-year { font-size: 10px; color: #777; white-space: nowrap; }
+  .edu-desc { font-size: 10px; color: #666; margin-top: 2px; line-height: 1.5; }
+
+  /* === AWARDS === */
+  /* Table model so title / issuer / year share one baseline across every row. */
+  .award-table { display: table; width: 100%; }
+  .award-item { display: table-row; }
+
+  .award-item > * {
+    display: table-cell;
+    vertical-align: baseline;
+    padding-bottom: 6px;
+  }
+
+  .award-title { font-size: 10.5px; font-weight: 500; color: #333; }
+  /* The placement itself is the scannable part of the row. */
+  .award-title strong { font-weight: 700; color: #1a1a1a; }
+  .award-org { color: var(--org-color); white-space: nowrap; }
+
+  .award-year {
+    font-size: 10px;
+    color: #777;
+    white-space: nowrap;
+    text-align: right;
+    width: 44px;
+  }
+
+  /* === PRINT === */
+  @media print {
+    body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    /* Right-aligned content (periods, years) aligns to the content-box edge, and
+       the last glyph's side bearing can spill ~1px past it into Chromium's print
+       clip. A right gutter restores it without re-centering the page. */
+    .page { padding: 0 0.18in 0 0; }
+  }
+
+  /* === PAGE BREAK CONTROL === */
+  /* Atomic units never split. A project is atomic on purpose: a title stranded
+     from its bullets, or a bare tech line at the top of a page, is unreadable. */
+  .header,
+  .edu-item,
+  .project,
+  .volunteer-item,
+  .award-item,
+  .skill-item {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  /* Keep a heading attached to what follows it. */
+  .section-title,
+  .job-company,
+  .job-role,
+  .job-location,
+  .project-title {
+    break-after: avoid;
+    page-break-after: avoid;
+  }
+</style>
+<style>
+  body { line-height: 1.4; }
+  .header { margin-bottom: 14px; }
+  .section { margin-bottom: 9px; }
+  .project { margin-bottom: 7px; }
+  .project-bullets li { line-height: 1.4; }
+  .job { margin-bottom: 8px; }
+  .job ul { margin-top: 5px; }
+  .edu-item { margin-bottom: 6px; }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- HEADER -->
+  <div class="header">
+    <h1>Gwee Per Ming</h1>
+    <div class="header-gradient"></div>
+    <div class="contact-row">
+      <a href="tel:+6011-55095871">+6011-55095871</a>
+      <span class="separator">|</span>
+      <a href="mailto:perminggwee@gmail.com">perminggwee@gmail.com</a>
+      <span class="separator">|</span>
+      <a href="https://www.linkedin.com/in/gweeperming">LinkedIn</a>
+      <span class="separator">|</span>
+      <a href="https://github.com/pmgwee">GitHub</a>
+      <span class="separator">|</span>
+      <a href="https://www.mingcreatives.com/">Portfolio</a>
+      <span class="separator">|</span>
+      <span>Johor, Malaysia</span>
+    </div>
+  </div>
+
+    <!-- SUMMARY -->
+  <div class="section">
+    <div class="section-title">Professional Summary</div>
+    <div class="summary-text">Computer Science graduate and part-time MBA candidate targeting a graduate programme in technology, specifically Data &amp; AI Engineer roles, with fintech engineering experience and hands-on experience building and operating production AI systems powered by the latest AI agentic skillset, while integrating emerging AI capabilities into day-to-day working practice.</div>
+  </div>
+
+  <!-- EDUCATION -->
+  <div class="section">
+    <div class="section-title">Education</div>
+    <div class="edu-item">
+      <div class="edu-header">
+        <span class="edu-title">Bachelor of Computer Science (Honours), <span class="edu-org">Universiti Sains Malaysia</span></span>
+        <span class="edu-year">Oct 2021 - Oct 2025 | Gelugor, Penang</span>
+      </div>
+      <div class="edu-desc"><strong>CGPA 3.48 (Second Class Upper)</strong> | <strong>Dean&#39;s List, 3 consecutive semesters</strong></div>
+    </div>
+    <div class="edu-item">
+      <div class="edu-header">
+        <span class="edu-title">Master of Business Administration (Online Learning), <span class="edu-org">INTI International University</span></span>
+        <span class="edu-year">June 2026 - Present | Nilai, Kuala Lumpur</span>
+      </div>
+      <div class="edu-desc"><strong>CGPA 3.67 (First-Class Honors)</strong> | Online delivery does not restrict full-time employment.</div>
+    </div>
+    <div class="edu-item">
+      <div class="edu-header">
+        <span class="edu-title">Physics, Chemistry, Computer Science, <span class="edu-org">Kedah Matriculation College</span></span>
+        <span class="edu-year">Jan 2020 - Apr 2021 | Changlun, Kedah</span>
+      </div>
+      <div class="edu-desc"><strong>CGPA 3.92 (First-Class Honors)</strong></div>
+    </div>
+  </div>
+
+  <!-- SKILLS -->
+  <div class="section">
+    <div class="section-title">Skills</div>
+    <div class="skill-item"><span class="skill-category">Spoken Languages:</span> Mandarin (Native), English, Malay</div>
+    <div class="skill-item"><span class="skill-category">Data &amp; Delivery:</span> SQL Query, Query Optimization, ETL, Batch Processing, Spring Batch Pipelines, Requirements Gathering &amp; Analysis</div>
+    <div class="skill-item"><span class="skill-category">Programming Languages:</span> SQL, Python, Java</div>
+    <div class="skill-item"><span class="skill-category">AI Technologies:</span> Agentic Workflows, Agent Memory (Obsidian), Agent Harness, Agent Skills &amp; Plugin, MCP, Tool Use, Prompt Engineering, Context Engineering, Multi-Agent Workflow, RAG, Embeddings, Chunking, Hybrid Retrieval, Pinecone, LangGraph, LangChain</div>
+    <div class="skill-item"><span class="skill-category">Cloud &amp; Engineering Tools:</span> Azure VM, Azure Key Vault, AWS EC2, AWS S3, AWS CloudFront, AWS IAM, GCP Compute Engine, GCP OAuth 2.0 &amp; APIs, Oracle DB, SQLite, Supabase, CI/CD, Git, GitLab, Jenkins, GitHub Actions, APScheduler, Vercel Cron Jobs, FastAPI, REST API, Postman, Playwright, Next.js</div>
+  </div>
+
+  <!-- EXPERIENCE -->
+  <div class="section">
+    <div class="section-title">Work Experience</div>
+    <div class="job">
+      <div class="job-header">
+        <span class="job-company">iFAST Capital Sdn Bhd</span>
+        <span class="job-period">March 2024 - August 2024</span>
+      </div>
+      <div class="job-role">Software Engineer Intern (Data Automation)</div>
+      <div class="job-location">Bukit Bintang, Kuala Lumpur</div>
+      <ul>
+        <li>Architected and implemented a Spring Batch compliance pipeline, designing the job flow and processing patterns to process client account records against complex passport-expiry constraints. Automated transaction restrictions, audit trails and six rule-triggered email notification types, while optimizing the processing workflow through bulk operations and avoiding hard-coded logic.</li>
+        <li>Translated an investor-classification requirement into an end-to-end system enhancement, mapping how new investor attributes should be captured, derived, persisted and reloaded across account-opening, account-update and profile-maintenance journeys.</li>
+        <li>Collaborated with 14 developers and 4 project directors across monthly sprints, supporting CI/CD pipelines, change request management and production releases for both internal and external business-critical fintech systems.</li>
+      </ul>
+    </div>
+    <div class="job">
+      <div class="job-header">
+        <span class="job-company">Ober Mountain</span>
+        <span class="job-period">December 2025 - May 2026</span>
+      </div>
+      <div class="job-role">Ski &amp; Snowboard Technician (USA Work &amp; Travel)</div>
+      <div class="job-location">Gatlinburg, Tennessee</div>
+      <ul>
+        <li>Worked in a diverse, multicultural team representing over 10 countries, adapting to a new work environment by overcoming language barriers.</li>
+        <li>Recognized with 2 Honorable Mentions from manager for resolving complex customer issues with technical expertise.</li>
+      </ul>
+    </div>
+    <div class="job">
+      <div class="job-header">
+        <span class="job-company">Yierming Production (Studio)</span>
+        <span class="job-period">May 2024 - December 2025</span>
+      </div>
+      <div class="job-role">Founder</div>
+      <div class="job-location">Kuala Lumpur</div>
+      <ul>
+        <li>Designed and launched branding and web content for an AI education startup led by a former technology company AI Director.</li>
+        <li>Directed a four-digit budget commercial campaign for a Web3 brand (14K+ followers).</li>
+        <li>Delivered digital marketing strategies for a 400K-follower F&amp;B brand, driving 10K+ Shopee sales for top products.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- PROJECTS -->
+  <div class="section">
+    <div class="section-title">Projects</div>
+    <div class="project">
+      <div class="project-title"><a href="https://github.com/pmgwee/real-ming">Personal Always-On AI Agent (Hermes + Real-Ming Operations Layer)</a></div>
+      <ul class="project-bullets">
+        <li>Architected a personalized Hermes Agent with a Real-Ming control-plane integration and governance layer, preserving Hermes&#39;s native reasoning, capabilities, memory and kanban while contributing configuration, 6 agent skills and 9 MCP tools reached as agent capabilities.</li>
+        <li>Enabled autonomous coding workflows spanning repository study, isolated workspace setup, implementation, review, testing and PR-ready delivery, with Real-Ming supplying operator preferences, rules and configuration.</li>
+        <li>Integrated cross-source coordination over Google Calendar, Gmail and Notion through provider adapters with explicit routing across 3 Google accounts, composing two daily reports (a morning brief and an evening executive roll-up) on an always-on Azure VM.</li>
+      </ul>
+      <div class="project-tech">Azure VM, Azure Key Vault, Hermes Agent (native Kanban/workspaces), MCP, Agent Skills, Telegram, Notion API, Google Calendar &amp; Gmail APIs, Obsidian/LLM-Wiki, SQLite, TypeScript, Node.js</div>
+    </div>
+    <div class="project">
+      <div class="project-title"><a href="https://github.com/pmgwee/agent-knowledge-base-codex">Cross-Agent Context Engineering with Persistent Second Brain</a></div>
+      <ul class="project-bullets">
+        <li>Engineered a transcript-native persistent memory extending the LLM-wiki pattern to consolidate evidence-cited, wikilinked memories into Obsidian, achieving zero cold-start latency on memory collection.</li>
+        <li>Integrated Claude Code and Codex via native lifecycle hooks plus codegraph, combining BM25, vector search and graph RRF, achieving 96.0% Recall@5 and 0.922 MRR across 246,750 turns while capping session-start orientations at 1,500 tokens or fewer.</li>
+        <li>Achieved net token savings against raw context pasting, building a Next.js console to track real-time system condition, retrieval quality, hook delivery status and deployment drift.</li>
+      </ul>
+      <div class="project-tech">Rust, Obsidian, Hybrid RAG Retrieval, all-MiniLM-L6-v2, SQLite FTS5, Codegraph, MCP, Claude Code &amp; Codex Lifecycle Hooks, LongMemEval, Next.js</div>
+    </div>
+    <div class="project">
+      <div class="project-title"><a href="https://github.com/pmgwee/BersamaAi-community">Autonomous Trending News AI Agent (BersamaAi)</a></div>
+      <ul class="project-bullets">
+        <li>Built a workflow that ingests online sources and routes each candidate through a GLM-5.2 LLM-as-a-Judge that grades relevance and classifies it into one of 9 topic channels, posting cards to Discord every 3 hours via GitHub Actions.</li>
+        <li>Deployed an LLM-powered Discord community bot with an MCP server exposing Discord as a tool surface to AI agents, running on a GCP VM.</li>
+        <li>Handled caption-less video via an ASR model on a daily GCP cron job that summarizes curated YouTube channel videos.</li>
+      </ul>
+      <div class="project-tech">GCP Compute Engine, Python, Agent Harness, Discord MCP, GLM-5.2, Groq Whisper ASR, yt-dlp, GitHub Actions</div>
+    </div>
+    <div class="project">
+      <div class="project-title"><a href="https://github.com/pmgwee/Multi-Agent-Autopilot">Multi-Agent Routing Orchestration Claude Skills</a></div>
+      <ul class="project-bullets">
+        <li>Architected a hands-off pipeline (kickstart, autopilot, UAT-runbook) chaining a top-tier planning model with a cheaper CLI executor model, cutting manual prompting to zero and enabling crash-safe resumption across sessions.</li>
+        <li>Built an automated looped evaluation layer delivering Playwright screenshot evidence for a top-tier model to perform code review at each delivery phase.</li>
+      </ul>
+      <div class="project-tech">Agent Skills, JavaScript, Prompt Engineering, Playwright, MCP</div>
+    </div>
+    <div class="project">
+      <div class="project-title"><a href="https://github.com/pmgwee/Ai-Chatbot">RAG Chatbot with Self Auto-Ingestion (INTI-MBA Chatbot)</a></div>
+      <ul class="project-bullets">
+        <li>Engineered a LangGraph RAG agent implementing multi-query retrieval, LLM document grading and query-rewriting self-correction, delivering cited answers grounded to source files across 4 live Canvas LMS MBA courses.</li>
+        <li>Automated daily ingestion with APScheduler, keeping 215+ documents and 3,800+ searchable passages continuously up to date with zero manual uploads.</li>
+      </ul>
+      <div class="project-tech">FastAPI, LangGraph, LangChain, Hybrid RAG Retrieval, Pinecone, RapidOCR, APScheduler, AWS EC2, Next.js</div>
+    </div>
+  </div>
+
+  <!-- AWARDS -->
+  <div class="section">
+    <div class="section-title">Awards &amp; Honors</div>
+    <div class="award-table"><div class="award-item">
+      <span class="award-title"><strong>Champion</strong> - Young Entrepreneur Programme (YEP)</span>
+      <span class="award-org">MyPSA</span>
+      <span class="award-year">2025</span>
+    </div>
+    <div class="award-item">
+      <span class="award-title"><strong>Champion</strong> - Tech4Good SG Flagship</span>
+      <span class="award-org">ICMS-GovTech</span>
+      <span class="award-year">2024</span>
+    </div>
+    <div class="award-item">
+      <span class="award-title"><strong>Third Prize</strong> - ICT Innovation Track</span>
+      <span class="award-org">Huawei</span>
+      <span class="award-year">2024</span>
+    </div>
+    <div class="award-item">
+      <span class="award-title"><strong>Second Prize</strong> - Blockchain For Good Malaysia Inter-Varsity Hackathon</span>
+      <span class="award-org">UTM-Algohub</span>
+      <span class="award-year">2023</span>
+    </div>
+    <div class="award-item">
+      <span class="award-title"><strong>Finalist</strong> - Payhack 24-Hour Hackathon</span>
+      <span class="award-org">PayNet</span>
+      <span class="award-year">2023</span>
+    </div>
+    <div class="award-item">
+      <span class="award-title"><strong>5th Place &amp; Best Business Idea Award</strong> - International Varsity Hackathon</span>
+      <span class="award-org">USM</span>
+      <span class="award-year">2023</span>
+    </div></div>
+  </div>
+
+  <!-- VOLUNTEERING -->
+  <div class="section">
+    <div class="section-title">Volunteering</div>
+    <div class="job volunteer-item">
+      <div class="job-header">
+        <span class="volunteer-title">EPIC Homes House Builder</span>
+        <span class="job-period">Jul 2025</span>
+      </div>
+      <ul>
+        <li>Completed a 3-day modular home build for an Orang Asli family, contributing to 350+ homes delivered nationwide to address a housing crisis affecting 12,000+ families.</li>
+      </ul>
+    </div>
+    <div class="job volunteer-item">
+      <div class="job-header">
+        <span class="volunteer-title">Sea Turtle Research Unit (SEATRU) Conservation Field Volunteer</span>
+        <span class="job-period">Jul 2025</span>
+      </div>
+      <ul>
+        <li>Conducted nocturnal beach patrols, turtle tagging and nest monitoring to improve hatchling survival against natural odds of 1 in 1,000, within a programme engaging 5,700+ individuals from 36 countries.</li>
+      </ul>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>
