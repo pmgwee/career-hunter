@@ -114,6 +114,55 @@ func TestRenderAppLineIncludesDateColumn(t *testing.T) {
 	}
 }
 
+func TestRenderAppLineKeepsUnscoredRowsAsNA(t *testing.T) {
+	pm := NewPipelineModel(
+		theme.NewTheme("catppuccin-mocha"),
+		nil,
+		model.PipelineMetrics{},
+		"..",
+		120,
+		40,
+	)
+
+	line := pm.renderAppLine(model.CareerApplication{
+		Number:   1,
+		Company:  "Acme",
+		Role:     "Engineer",
+		Status:   "Applied",
+		ScoreRaw: "N/A",
+	}, false)
+
+	if !strings.Contains(line, "N/A") {
+		t.Fatalf("expected unscored row to render N/A, got %q", line)
+	}
+	if strings.Contains(line, "0.0") {
+		t.Fatalf("unscored row was rendered as numeric zero: %q", line)
+	}
+}
+
+func TestRenderAppLineKeepsExplicitZeroScoreNumeric(t *testing.T) {
+	pm := NewPipelineModel(
+		theme.NewTheme("catppuccin-mocha"),
+		nil,
+		model.PipelineMetrics{},
+		"..",
+		120,
+		40,
+	)
+
+	line := pm.renderAppLine(model.CareerApplication{
+		Number:   1,
+		Company:  "Acme",
+		Role:     "Engineer",
+		Status:   "Applied",
+		ScoreRaw: "0.0/5",
+	}, false)
+
+	if !strings.Contains(line, "0.0") {
+		t.Fatalf("expected explicit zero score to remain numeric, got %q", line)
+	}
+}
+
 func TestSearchFiltersByCompanyRoleAndNotes(t *testing.T) {
 	apps := []model.CareerApplication{
 		{Company: "Stripe", Role: "Backend Engineer", Status: "Evaluated", Score: 4.6, Notes: "payments infra"},

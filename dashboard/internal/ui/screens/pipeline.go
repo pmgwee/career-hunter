@@ -1608,7 +1608,7 @@ func (m PipelineModel) rowOverhead(c colWidths) int {
 		outerPadding = 4 // lipgloss Padding(0, 2) — two runes on each side
 		// The score segment is budgeted c.score above but rendered unpadded, so
 		// the budget gets the difference back. Measured against the DATA row,
-		// where the score is always fmt.Sprintf("%.1f") — three runes. The
+		// where the score is always three runes (X.X or N/A). The
 		// header uses the ColFit label instead, which is wider in some locales
 		// ("UYUM", "AJUSTE"); that pre-existing header/row drift is not
 		// something the role width can fix for both at once.
@@ -1771,9 +1771,19 @@ func (m PipelineModel) renderAppLine(app model.CareerApplication, selected bool)
 	}
 	numStyle := lipgloss.NewStyle().Foreground(m.theme.Blue).Bold(true).Width(cw.num)
 
-	// Score with color
-	scoreStyle := m.scoreStyle(app.Score)
-	score := scoreStyle.Render(fmt.Sprintf("%.1f", app.Score))
+	// Score with color. An unscored tracker row carries the intentional N/A
+	// sentinel; do not collapse it into a red-looking numeric zero. Keep an
+	// explicit 0.0/5 score visible when the tracker actually contains one.
+	scoreText := strings.TrimSpace(app.ScoreRaw)
+	var scoreStyle lipgloss.Style
+	if app.Score > 0 || strings.Contains(scoreText, "/5") {
+		scoreStyle = m.scoreStyle(app.Score)
+		scoreText = fmt.Sprintf("%.1f", app.Score)
+	} else {
+		scoreStyle = lipgloss.NewStyle().Foreground(m.theme.Subtext)
+		scoreText = "N/A"
+	}
+	score := scoreStyle.Render(scoreText)
 
 	// Company (truncate)
 	company := truncateRunes(app.Company, cw.company)
