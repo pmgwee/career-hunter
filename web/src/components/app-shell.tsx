@@ -20,7 +20,6 @@ import { NAV_ITEMS, isActivePath } from "@/lib/nav-items";
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  if (pathname === "/login" || pathname.startsWith("/auth/")) return children;
   return (
     <JobsProvider>
       <PipelineProvider>
@@ -72,11 +71,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               </div>
               <ThemeToggle showLabel />
               <div className="px-1">
-                <span className={`${instrumentSerif.className} text-sm text-faint`}>private cloud · synced</span>
+                <span className={`${instrumentSerif.className} text-sm text-faint`}>local-first · v0</span>
               </div>
-              <form action="/auth/signout" method="post">
-                <button className="w-full rounded-md border border-border px-3 py-2 text-left text-xs text-muted transition-colors hover:bg-surface-hover hover:text-foreground">Sign out</button>
-              </form>
             </div>
           </div>
         </aside>

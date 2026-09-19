@@ -204,5 +204,3 @@ follow-ups.md
 *.db
 *.db-wal
 *.db-shm
-
-.vercel

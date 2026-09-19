@@ -1,5 +1,8 @@
+import fs from "node:fs";
+import path from "node:path";
+import { careerOpsRoot, readApplications } from "@/lib/career-ops";
+import { getNormalizeTextKey } from "@/lib/core/text-key";
 import type { DiscoveredOffer } from "@/lib/explore";
-import { loadCareerWorkspace } from "@/lib/workspace/snapshot";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -17,12 +20,17 @@ export const dynamic = "force-dynamic";
 export async function GET(req: Request) {
   const days = Math.min(30, Math.max(1, Number(new URL(req.url).searchParams.get("days")) || 7));
   const cutoff = Date.now() - days * 86_400_000;
-  const snapshot = await loadCareerWorkspace();
-  const rows = (snapshot.files.get("data/scan-history.tsv") ?? "").split("\n");
+  let rows: string[];
+  try {
+    rows = fs.readFileSync(path.join(careerOpsRoot(), "data", "scan-history.tsv"), "utf8").split("\n");
+  } catch {
+    return Response.json({ offers: [], count: 0 });
+  }
 
   // Companies already evaluated → don't resurface as "new".
-  const norm = (value: string) => value.normalize("NFKC").toLocaleLowerCase().replace(/[^\p{L}\p{N}]+/gu, " ").trim();
-  const evaluated = new Set(snapshot.applications.map((application) => norm(application.company)).filter(Boolean));
+  const normalizeTextKey = await getNormalizeTextKey();
+  const norm = (s: string) => normalizeTextKey(s, " ");
+  const evaluated = new Set(readApplications().map((a) => norm(a.company)).filter(Boolean));
 
   const toOffer = (c: string[]): DiscoveredOffer | null => {
     const [url, firstSeen, portal, title, company, status, location] = c;

@@ -119,18 +119,8 @@ export function detectColumnMap(lines, aliases) {
  * @returns {{n: string, date: string, company: string, via: string, role: string, score: string, status: string, pdf: string, report: string, notes: string}[]}
  */
 export function parseApplications(md, rootDir) {
-  return parseApplicationsWithAliases(md, loadHeaderAliases(rootDir));
-}
-
-/** Parse tracker markdown with an explicit alias map. Cloud snapshots carry
- * tracker-aliases.json alongside applications.md, so the Vercel read path can
- * preserve the core parser's exact column semantics without filesystem access.
- * @param {string} md
- * @param {Record<string, string>} aliases
- */
-export function parseApplicationsWithAliases(md, aliases) {
   const lines = md.split("\n");
-  const map = detectColumnMap(lines, aliases);
+  const map = detectColumnMap(lines, loadHeaderAliases(rootDir));
   const mappedWidth = map ? Math.max(...Object.values(map)) + 1 : 0;
   const rows = [];
   for (const raw of lines) {

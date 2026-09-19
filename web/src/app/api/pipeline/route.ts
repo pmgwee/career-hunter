@@ -1,4 +1,4 @@
-import { loadCareerWorkspace } from "@/lib/workspace/snapshot";
+import { pipelineSummary } from "@/lib/career-ops";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic"; // always read fresh local files
@@ -7,12 +7,11 @@ export const dynamic = "force-dynamic"; // always read fresh local files
 // can resolve "all the Anthropic ones" to concrete postings CLIENT-SIDE — the
 // model only ever emits a company name, never URLs (no hallucination, no tokens).
 export async function GET() {
-  const s = await loadCareerWorkspace();
+  const s = pipelineSummary();
   return Response.json({
     inbox: s.inbox,
     applications: s.applications,
-    root: `cloud://${s.workspaceId}`,
-    rootExists: true,
-    revision: s.revision,
+    root: s.root,
+    rootExists: s.rootExists,
   });
 }
