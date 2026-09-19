@@ -62,7 +62,8 @@ email**; only the newest link is valid.
   scoped to one workspace; the browser never receives the server secret key.
 - **Local files remain the CLI working copy:** sync publishes local changes and
   atomically pulls authenticated dashboard updates back; it never deletes a
-  local file.
+  local file. Derived ATS cache files under `data/cache/` stay local and are
+  intentionally excluded from cloud sync.
 - **Never auto-submits:** the apply flow drafts and prefills; submitting is
   always a human action.
 - **CV generation never asks the agent to write:** the `pdf` worker tailors your

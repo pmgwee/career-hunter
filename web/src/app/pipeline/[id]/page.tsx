@@ -6,7 +6,7 @@ export const dynamic = "force-dynamic";
 
 export default async function ReportPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const snapshot = await loadCareerWorkspace();
+  const snapshot = await loadCareerWorkspace({ reportApplicationNumber: id });
   const app = snapshot.applications.find((application) => application.n === id) ?? null;
   const report = reportFromSnapshot(snapshot, id);
   if (!app && !report) notFound();

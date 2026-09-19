@@ -6,7 +6,7 @@ import { loadCareerWorkspace } from "@/lib/workspace/snapshot";
 export const dynamic = "force-dynamic";
 
 export default async function Analytics({ searchParams }: { searchParams: Promise<{ tab?: string | string[] }> }) {
-  const { applications, reportsByApplication } = await loadCareerWorkspace();
+  const { applications, reportsByApplication } = await loadCareerWorkspace({ includeReports: true });
   const enriched = analyticsApplications(applications, reportsByApplication);
   const progress = computeProgressMetrics(enriched);
   const stats = computeStatsMetrics(enriched);

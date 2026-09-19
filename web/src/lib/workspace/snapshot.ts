@@ -7,6 +7,23 @@ import type { Application, InboxJob, LifecyclePhase, ReportData } from "@/lib/ca
 
 type CloudFile = { path: string; content: string; revision: number; updated_at: string };
 
+const CORE_FILE_PATHS = [
+  "data/applications.md",
+  "data/pipeline.md",
+  "data/scan-history.tsv",
+  "data/status-log.tsv",
+  "tracker-aliases.json",
+] as const;
+
+const PREREQUISITE_PATHS = ["cv.md", "config/profile.yml", "modes/_profile.md", "portals.yml"] as const;
+
+export type CareerWorkspaceOptions = {
+  /** Load report bodies only for pages that actually render or analyse them. */
+  includeReports?: boolean;
+  /** Limit a report page to the linked report when possible. */
+  reportApplicationNumber?: string;
+};
+
 export type CareerWorkspaceSnapshot = {
   workspaceId: string;
   ownerId: string;
@@ -93,10 +110,10 @@ function reportsForApplications(files: ReadonlyMap<string, string>, applications
   return reports;
 }
 
-export async function loadCareerWorkspace(): Promise<CareerWorkspaceSnapshot> {
+export async function loadCareerWorkspace(options: CareerWorkspaceOptions = {}): Promise<CareerWorkspaceSnapshot> {
   const supabase = await createClient();
-  const { data: auth, error: authError } = await supabase.auth.getUser();
-  if (authError || !auth.user) throw new Error("Authenticated workspace is unavailable");
+  const { data: auth, error: authError } = await supabase.auth.getClaims();
+  if (authError || !auth?.claims?.sub) throw new Error("Authenticated workspace is unavailable");
 
   const { data: workspace, error: workspaceError } = await supabase
     .from("career_workspaces")
@@ -105,15 +122,30 @@ export async function loadCareerWorkspace(): Promise<CareerWorkspaceSnapshot> {
     .single();
   if (workspaceError || !workspace) throw new Error(workspaceError?.message ?? "Career workspace is missing");
 
-  const { data, error } = await supabase
-    .from("career_files")
-    .select("path, content, revision, updated_at")
-    .eq("workspace_id", workspace.id)
-    .is("deleted_at", null)
-    .order("path");
-  if (error) throw new Error(error.message);
+  // Keep the common route payload small. The old implementation selected every
+  // synced file, including all reports and ATS cache JSON, for every page render.
+  // Most routes only need these tracker files and prerequisite existence signals.
+  const [coreResult, prerequisiteResult] = await Promise.all([
+    supabase
+      .from("career_files")
+      .select("path, content, revision, updated_at")
+      .eq("workspace_id", workspace.id)
+      .is("deleted_at", null)
+      .in("path", [...CORE_FILE_PATHS])
+      .order("path"),
+    supabase
+      .from("career_files")
+      .select("path")
+      .eq("workspace_id", workspace.id)
+      .is("deleted_at", null)
+      .in("path", [...PREREQUISITE_PATHS])
+      .order("path"),
+  ]);
+  if (coreResult.error) throw new Error(coreResult.error.message);
+  if (prerequisiteResult.error) throw new Error(prerequisiteResult.error.message);
 
-  const files = new Map((data as CloudFile[]).map((file) => [file.path, file.content]));
+  const files = new Map((coreResult.data as CloudFile[]).map((file) => [file.path, file.content]));
+  for (const prerequisite of prerequisiteResult.data as Array<{ path: string }>) files.set(prerequisite.path, "");
   const applications = parseApplicationsWithAliases(files.get("data/applications.md") ?? "", aliases(files));
   const scanDates = parseScanDates(files.get("data/scan-history.tsv") ?? "");
   const inbox = parseInbox(files.get("data/pipeline.md") ?? "").map((job) => ({
@@ -126,6 +158,33 @@ export async function loadCareerWorkspace(): Promise<CareerWorkspaceSnapshot> {
   const hasData = applications.length > 0 || inbox.some((job) => !job.done);
   const onboardingNeeded = missing.length > 0;
   const phase: LifecyclePhase = !hasCv && !hasData ? "first-run" : onboardingNeeded ? "in-between" : "established";
+
+  if (options.includeReports || options.reportApplicationNumber) {
+    const linked = options.reportApplicationNumber
+      ? applications.find((application) => application.n === options.reportApplicationNumber)
+      : null;
+    const linkedPath = linked ? linkedReportPath(linked) : null;
+    const reportQuery = () =>
+      supabase
+        .from("career_files")
+        .select("path, content, revision, updated_at")
+        .eq("workspace_id", workspace.id)
+        .is("deleted_at", null);
+    const reportResult = linkedPath
+      ? await reportQuery().eq("path", linkedPath)
+      : await reportQuery().like("path", "reports/%");
+    if (reportResult.error) throw new Error(reportResult.error.message);
+    for (const file of reportResult.data as CloudFile[]) files.set(file.path, file.content);
+
+    // A tracker link can point at a report that was renamed or not synced yet.
+    // Preserve the old numeric fallback instead of turning that case into a
+    // blank report page.
+    if (linkedPath && reportResult.data.length === 0) {
+      const fallbackResult = await reportQuery().like("path", "reports/%");
+      if (fallbackResult.error) throw new Error(fallbackResult.error.message);
+      for (const file of fallbackResult.data as CloudFile[]) files.set(file.path, file.content);
+    }
+  }
 
   return {
     workspaceId: workspace.id,

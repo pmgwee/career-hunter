@@ -15,6 +15,7 @@ if (!token) throw new Error("CAREER_OPS_SYNC_TOKEN is missing. Add it to web/.en
 
 const exact = ["article-digest.md", "cv.md", "portals.yml", "tracker-aliases.json", "config/profile.yml", "modes/_profile.md", "modes/_custom.md", "voice-dna.md"];
 const roots = ["data", "reports", "interview-prep", "writing-samples"];
+const excludedPrefixes = ["data/cache/"];
 const extensions = new Set([".md", ".tsv", ".csv", ".json", ".yml", ".yaml", ".txt"]);
 const sent = new Map();
 
@@ -24,6 +25,7 @@ async function collectTree(relative, output) {
   try { entries = await fs.readdir(absolute, { withFileTypes: true }); } catch { return; }
   for (const entry of entries) {
     const child = path.posix.join(relative.replaceAll("\\", "/"), entry.name);
+    if (excludedPrefixes.some((prefix) => child === prefix.slice(0, -1) || child.startsWith(prefix))) continue;
     if (entry.isDirectory()) await collectTree(child, output);
     else if (entry.isFile() && extensions.has(path.extname(entry.name).toLowerCase())) output.add(child);
   }

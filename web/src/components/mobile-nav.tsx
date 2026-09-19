@@ -156,6 +156,7 @@ export function MobileNav() {
               <Link
                 key={href}
                 href={href}
+                prefetch={false}
                 onClick={() => setOpen(false)}
                 aria-current={active ? "page" : undefined}
                 className={cn(
