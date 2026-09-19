@@ -1,6 +1,4 @@
-import { execFile } from "node:child_process";
-import fs from "node:fs";
-import { careerOpsRoot, rootScript } from "@/lib/career-ops";
+import { loadCareerWorkspace } from "@/lib/workspace/snapshot";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -9,18 +7,9 @@ export const dynamic = "force-dynamic";
 // source of truth the CLI uses to decide onboarding. We never reimplement the
 // prerequisite list; we read the core's verdict.
 export async function GET() {
-  const root = careerOpsRoot();
-  const doctor = rootScript("doctor");
-  if (!fs.existsSync(doctor)) {
-    return Response.json({ available: false, onboardingNeeded: false, missing: [], warnings: [] });
-  }
-  const stdout = await new Promise<string>((resolve) => {
-    execFile("node", [doctor, "--json"], { cwd: root, timeout: 10_000 }, (_err, out) => resolve(out || ""));
-  });
   try {
-    const last = stdout.trim().split("\n").pop() || "{}";
-    const j = JSON.parse(last);
-    return Response.json({ available: true, onboardingNeeded: !!j.onboardingNeeded, missing: j.missing ?? [], warnings: j.warnings ?? [] });
+    const snapshot = await loadCareerWorkspace();
+    return Response.json({ available: true, onboardingNeeded: snapshot.onboardingNeeded, missing: snapshot.missing, warnings: [] });
   } catch {
     return Response.json({ available: false, onboardingNeeded: false, missing: [], warnings: [] });
   }

@@ -13,6 +13,7 @@ import {
 import { cn } from "@/lib/cn";
 import { CadenceSettings } from "@/components/followups/cadence-settings";
 import { persistCliId, readSavedCliId } from "@/lib/saved-cli";
+import { SyncSettings } from "@/components/sync-settings";
 
 type Cli = {
   id: string;
@@ -96,8 +97,10 @@ export function ConfigForm() {
     <div className="mx-auto max-w-2xl px-6 py-10">
       <h1 className="font-display text-2xl tracking-tight text-landing">Config</h1>
       <p className="mt-1 text-sm text-muted">
-        Run career-ops on your own AI, right on your computer. Your CV and data never leave your machine.
+        Run AI jobs on your computer while keeping the dashboard available through your private cloud workspace.
       </p>
+
+      <SyncSettings />
 
       {/* Engine mode */}
       <label className="mt-8 mb-2 block text-xs font-semibold uppercase tracking-[0.18em] text-muted">
@@ -311,7 +314,7 @@ export function ConfigForm() {
           {saved ? <Check className="size-4" /> : null}
           {saved ? "Saved" : "Save config"}
         </button>
-        <span className="text-xs text-faint">Local-first · on our roadmap</span>
+        <span className="text-xs text-faint">Private cloud · local tools supported</span>
       </div>
     </div>
   );

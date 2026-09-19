@@ -90,8 +90,8 @@ function reportFields(content: string, fallbackArchetype: string) {
   return { archetype, location, workMode, payMax: pay.value, paySource: pay.source };
 }
 
-function fromApplication(app: Application): AnalyticsApplication {
-  const report = readReport(app.n);
+function fromApplication(app: Application, cloudReports?: ReadonlyMap<string, { content: string }>): AnalyticsApplication {
+  const report = cloudReports?.get(app.n) ?? readReport(app.n);
   const notes = app.notes ?? "";
   const content = report?.content ?? "";
   const derived = reportFields(content, "");
@@ -109,6 +109,6 @@ function fromApplication(app: Application): AnalyticsApplication {
 }
 
 /** Read-only enrichment of tracker rows for Analytics. */
-export function analyticsApplications(applications: Application[]): AnalyticsApplication[] {
-  return applications.map(fromApplication);
+export function analyticsApplications(applications: Application[], cloudReports?: ReadonlyMap<string, { content: string }>): AnalyticsApplication[] {
+  return applications.map((application) => fromApplication(application, cloudReports));
 }

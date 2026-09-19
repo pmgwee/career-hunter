@@ -5,7 +5,7 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "career-ops — official web experience",
-  description: "The official, local-first web experience for career-ops.",
+  description: "Your private, synchronized career-ops dashboard.",
   // Home-screen / standalone (iOS): let our theme-color flow up to the status bar
   // + Dynamic Island; safe-area insets handle the layout.
   appleWebApp: { capable: true, statusBarStyle: "black-translucent", title: "career-ops" },

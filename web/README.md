@@ -1,9 +1,10 @@
 # career-ops web (alpha)
 
-An **experimental, opt-in web UI** for career-ops. It is a local-first *view* over
-the exact same files the CLI reads and writes (`data/pipeline.md`,
-`data/applications.md`, `reports/`, `config/`): no parallel engine, no separate
-database, no server. If you never run it, nothing about your CLI workflow changes.
+An **experimental, opt-in web UI** for career-ops. The hosted dashboard reads an
+authenticated Supabase workspace so the tracker remains available while the
+user's computer is offline. The CLI continues to use the canonical local files
+(`data/pipeline.md`, `data/applications.md`, `reports/`, `config/`), and the
+scoped sync client reconciles those text files with the same private workspace.
 
 > **Status: alpha.** Expect rough edges. Feedback →
 > [Discussion #1142](https://github.com/santifer/career-ops/discussions/1142) ·
@@ -20,7 +21,17 @@ npm run dev
 ```
 
 Open http://localhost:3000. The app reads the career-ops checkout it lives in
-(the parent directory) — your existing CV, pipeline and reports appear as-is.
+(the parent directory) when publishing changes. Dashboard reads come from the
+same cloud workspace in localhost and production.
+
+Copy `.env.example` to `.env.local` and fill the Supabase public settings. Sign
+in, open Config, create a device token, add the displayed
+`CAREER_OPS_SYNC_TOKEN` to `.env.local`, then run:
+
+```bash
+npm run sync:cloud   # one-time push + pull
+npm run sync:watch   # reconcile local/cloud changes every 15 seconds
+```
 
 ## What works today
 
@@ -35,8 +46,12 @@ Open http://localhost:3000. The app reads the career-ops checkout it lives in
 
 ## Safety
 
-- **Local-first:** the local web app runs entirely on your machine — no cloud,
-  no account needed. Your CV and data stay in your own files.
+- **Private by default:** every workspace table and artifact object is protected
+  by Supabase row-level security. Device tokens are random, hashed at rest, and
+  scoped to one workspace; the browser never receives the server secret key.
+- **Local files remain the CLI working copy:** sync publishes local changes and
+  atomically pulls authenticated dashboard updates back; it never deletes a
+  local file.
 - **Never auto-submits:** the apply flow drafts and prefills; submitting is
   always a human action.
 - **CV generation never asks the agent to write:** the `pdf` worker tailors your
