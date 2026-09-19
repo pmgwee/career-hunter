@@ -33,6 +33,17 @@ npm run sync:cloud   # one-time push + pull
 npm run sync:watch   # reconcile local/cloud changes every 15 seconds
 ```
 
+For email confirmation, add these URLs to Supabase Dashboard → Authentication
+→ URL Configuration → Redirect URLs:
+
+- `http://localhost:3000/auth/callback`
+- `https://career-hunter-nine.vercel.app/auth/callback`
+
+The signup action chooses the callback for the address where signup started, so
+localhost and Vercel can use the same account. If a confirmation link expires,
+return to `/login`, enter the email again, and choose **Resend confirmation
+email**; only the newest link is valid.
+
 ## What works today
 
 - **Pipeline** — your tracker as a sortable, filterable table; status changes

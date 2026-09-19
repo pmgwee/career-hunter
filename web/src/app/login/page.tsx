@@ -1,6 +1,6 @@
 import { ArrowRight, Cloud, Database, LockKeyhole } from "lucide-react";
 import { CoMark } from "@/components/co-mark";
-import { signIn, signUp } from "@/app/login/actions";
+import { resendConfirmation, signIn, signUp } from "@/app/login/actions";
 
 export default async function LoginPage({ searchParams }: { searchParams: Promise<{ error?: string; message?: string }> }) {
   const { error, message } = await searchParams;
@@ -27,6 +27,7 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
             <label className="block text-sm font-medium">Password<input name="password" type="password" autoComplete="current-password" minLength={8} required className="mt-1.5 w-full rounded-lg border border-border bg-background px-3 py-2.5 outline-none focus:border-brand" /></label>
             <button formAction={signIn} className="flex w-full items-center justify-center gap-2 rounded-full bg-brand px-4 py-2.5 text-sm font-semibold text-brand-foreground hover:bg-brand-200">Sign in <ArrowRight className="size-4" /></button>
             <button formAction={signUp} className="w-full rounded-full border border-border px-4 py-2.5 text-sm font-medium hover:bg-surface-hover">Create private workspace</button>
+            <button formAction={resendConfirmation} className="w-full text-sm text-muted underline underline-offset-4 hover:text-foreground">Resend confirmation email</button>
           </form>
         </section>
       </div>
