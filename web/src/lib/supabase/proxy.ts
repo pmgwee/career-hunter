@@ -19,7 +19,11 @@ export async function refreshSession(request: NextRequest) {
 
   const { data } = await supabase.auth.getClaims();
   const signedIn = Boolean(data?.claims?.sub);
-  const publicPath = request.nextUrl.pathname === "/login" || request.nextUrl.pathname.startsWith("/auth/");
+  // Device sync authenticates with its scoped bearer token instead of a browser
+  // session cookie. Let the route validate that token and return JSON rather than
+  // redirecting the CLI to the HTML login page.
+  const syncPath = request.nextUrl.pathname === "/api/sync/push";
+  const publicPath = request.nextUrl.pathname === "/login" || request.nextUrl.pathname.startsWith("/auth/") || syncPath;
 
   if (!signedIn && !publicPath) {
     const target = request.nextUrl.clone();
