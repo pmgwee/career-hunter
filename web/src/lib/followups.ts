@@ -71,6 +71,13 @@ export type CadenceMetadata = {
   waiting: number;
 };
 
+export type CadenceResponse = {
+  available: boolean;
+  metadata: CadenceMetadata | null;
+  entries: CadenceEntry[];
+  cadenceConfig?: Record<string, number> | null;
+};
+
 export type Urgency = "urgent" | "overdue" | "waiting" | "cold";
 
 /** Sort rank, NOT alphabetical: most pressing first. */

@@ -13,6 +13,7 @@ import { scoreTone } from "@/lib/format";
 import {
   type CadenceEntry,
   type CadenceMetadata,
+  type CadenceResponse,
   type Urgency,
   daysHeatClass,
   oxfordJoin,
@@ -72,18 +73,12 @@ function sortVal(e: CadenceEntry, key: SortKey): string | number | null {
   }
 }
 
-type CadenceResponse = {
-  available: boolean;
-  metadata: CadenceMetadata | null;
-  entries: CadenceEntry[];
-};
-
-export function FollowupsView() {
+export function FollowupsView({ initialData }: { initialData: CadenceResponse }) {
   const params = useSearchParams();
   const router = useRouter();
   const pathname = usePathname();
 
-  const [data, setData] = useState<CadenceResponse | null>(null);
+  const [data, setData] = useState<CadenceResponse>(initialData);
   const [expanded, setExpanded] = useState<Set<number>>(new Set());
   const [dialogFor, setDialogFor] = useState<CadenceEntry | null>(null);
   const [pinFor, setPinFor] = useState<CadenceEntry | null>(null);
@@ -95,8 +90,6 @@ export function FollowupsView() {
       .then((d: CadenceResponse) => setData(d))
       .catch(() => setData({ available: false, metadata: null, entries: [] }));
   }, []);
-  useEffect(refetch, [refetch]);
-
   // URL is the source of truth for tab/sort/dir (Pipeline convention); search
   // stays local for snappy typing, seeded from the URL. No sort param → the
   // engine's own order (most pressing first) and all headers show ⇅.

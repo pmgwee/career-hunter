@@ -1,8 +1,7 @@
-import fs from "node:fs";
-import path from "node:path";
-import { atomicWrite } from "@/lib/core/safe-write";
 import { isRealISODate, localISODate } from "@/lib/followups";
-import { followupsLogPath, withFollowupsWrite, followupsWriteError } from "@/lib/followups-server";
+import { withLogLock, followupsWriteError } from "@/lib/followups-server";
+import { loadCareerWorkspace } from "@/lib/workspace/snapshot";
+import { writeWorkspaceFiles } from "@/lib/workspace/write-files";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -32,18 +31,17 @@ export async function POST(req: Request) {
     return Response.json({ error: "date must be a real calendar date (YYYY-MM-DD)" }, { status: 400 });
   }
 
-  const file = followupsLogPath();
   try {
-    return await withFollowupsWrite(() => {
-      fs.mkdirSync(path.dirname(file), { recursive: true });
-      let existing = fs.existsSync(file) ? fs.readFileSync(file, "utf8") : "# Follow-ups\n\n";
+    return await withLogLock(async () => {
+      const snapshot = await loadCareerWorkspace({ includeFilePaths: ["data/follow-ups.md"] });
+      let existing = snapshot.files.get("data/follow-ups.md") ?? "# Follow-ups\n\n";
       // Supersede: drop any previous pin lines for this application (the parser
       // takes the last one anyway; pruning keeps the file tidy).
       const kept = existing.split("\n").filter((line) => !pinRe(appNum).test(line));
       existing = kept.join("\n");
       if (!existing.endsWith("\n")) existing += "\n";
       existing += `- next #${appNum} ${date} (set ${localISODate()})\n`;
-      atomicWrite(file, existing);
+      await writeWorkspaceFiles(snapshot, [{ path: "data/follow-ups.md", content: existing, contentType: "text/markdown; charset=utf-8" }]);
       return Response.json({ ok: true, appNum, date });
     });
   } catch (e) {
@@ -64,16 +62,17 @@ export async function DELETE(req: Request) {
     return Response.json({ error: "appNum (application #) required" }, { status: 400 });
   }
 
-  const file = followupsLogPath();
-  if (!fs.existsSync(file)) return Response.json({ error: "no follow-up log" }, { status: 404 });
   try {
-    return await withFollowupsWrite(() => {
-      const lines = fs.readFileSync(file, "utf8").split("\n");
+    return await withLogLock(async () => {
+      const snapshot = await loadCareerWorkspace({ includeFilePaths: ["data/follow-ups.md"] });
+      const existing = snapshot.files.get("data/follow-ups.md");
+      if (existing == null) return Response.json({ error: "no follow-up log" }, { status: 404 });
+      const lines = existing.split("\n");
       const kept = lines.filter((line) => !pinRe(appNum).test(line));
       if (kept.length === lines.length) {
         return Response.json({ error: `no pinned next-date for application #${appNum}` }, { status: 404 });
       }
-      atomicWrite(file, kept.join("\n"));
+      await writeWorkspaceFiles(snapshot, [{ path: "data/follow-ups.md", content: kept.join("\n"), contentType: "text/markdown; charset=utf-8" }]);
       return Response.json({ ok: true, appNum });
     });
   } catch (e) {

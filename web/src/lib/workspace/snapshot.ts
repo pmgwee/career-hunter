@@ -1,11 +1,19 @@
 import "server-only";
 
 import path from "node:path";
+import { headers } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
 import { parseApplicationsWithAliases } from "@/lib/tracker-table.mjs";
 import type { Application, InboxJob, LifecyclePhase, ReportData } from "@/lib/career-ops";
 
 type CloudFile = { path: string; content: string; revision: number; updated_at: string };
+type CloudWorkspaceRow = {
+  id: string;
+  owner_id: string;
+  revision: number;
+  files: CloudFile[];
+  prerequisites: Array<{ path: string }>;
+};
 
 const CORE_FILE_PATHS = [
   "data/applications.md",
@@ -22,6 +30,8 @@ export type CareerWorkspaceOptions = {
   includeReports?: boolean;
   /** Limit a report page to the linked report when possible. */
   reportApplicationNumber?: string;
+  /** Fetch the contents of additional synchronized files for this route. */
+  includeFilePaths?: readonly string[];
 };
 
 export type CareerWorkspaceSnapshot = {
@@ -112,40 +122,39 @@ function reportsForApplications(files: ReadonlyMap<string, string>, applications
 
 export async function loadCareerWorkspace(options: CareerWorkspaceOptions = {}): Promise<CareerWorkspaceSnapshot> {
   const supabase = await createClient();
-  const { data: auth, error: authError } = await supabase.auth.getClaims();
-  if (authError || !auth?.claims?.sub) throw new Error("Authenticated workspace is unavailable");
+  const contentPaths = [...new Set([...CORE_FILE_PATHS, ...(options.includeFilePaths ?? [])])];
+  const forwardedUserId = (await headers()).get("x-career-ops-user-id");
 
-  const { data: workspace, error: workspaceError } = await supabase
-    .from("career_workspaces")
-    .select("id, owner_id, revision")
-    .eq("slug", "default")
-    .single();
-  if (workspaceError || !workspace) throw new Error(workspaceError?.message ?? "Career workspace is missing");
-
-  // Keep the common route payload small. The old implementation selected every
-  // synced file, including all reports and ATS cache JSON, for every page render.
-  // Most routes only need these tracker files and prerequisite existence signals.
-  const [coreResult, prerequisiteResult] = await Promise.all([
+  // Auth verification and the RLS-protected data request are independent.
+  // Run them together, and embed both file collections in the workspace query,
+  // so a page pays one Supabase latency window instead of auth -> workspace ->
+  // two file queries. The duplicate relation aliases intentionally return
+  // content only for route data while keeping prerequisite checks path-only.
+  const [authResult, workspaceResult] = await Promise.all([
+    forwardedUserId ? Promise.resolve(null) : supabase.auth.getClaims(),
     supabase
-      .from("career_files")
-      .select("path, content, revision, updated_at")
-      .eq("workspace_id", workspace.id)
-      .is("deleted_at", null)
-      .in("path", [...CORE_FILE_PATHS])
-      .order("path"),
-    supabase
-      .from("career_files")
-      .select("path")
-      .eq("workspace_id", workspace.id)
-      .is("deleted_at", null)
-      .in("path", [...PREREQUISITE_PATHS])
-      .order("path"),
+      .from("career_workspaces")
+      .select(
+        "id, owner_id, revision, files:career_files!career_files_workspace_owner_fk(path, content, revision, updated_at), prerequisites:career_files!career_files_workspace_owner_fk(path)",
+      )
+      .eq("slug", "default")
+      .is("files.deleted_at", null)
+      .in("files.path", contentPaths)
+      .is("prerequisites.deleted_at", null)
+      .in("prerequisites.path", [...PREREQUISITE_PATHS])
+      .single(),
   ]);
-  if (coreResult.error) throw new Error(coreResult.error.message);
-  if (prerequisiteResult.error) throw new Error(prerequisiteResult.error.message);
+  const authenticatedUserId = forwardedUserId ?? authResult?.data?.claims?.sub;
+  if (authResult?.error || !authenticatedUserId) throw new Error("Authenticated workspace is unavailable");
+  const { data: workspaceData, error: workspaceError } = workspaceResult;
+  if (workspaceError || !workspaceData) throw new Error(workspaceError?.message ?? "Career workspace is missing");
+  const workspace = workspaceData as unknown as CloudWorkspaceRow;
+  if (workspace.owner_id !== authenticatedUserId) throw new Error("Authenticated workspace is unavailable");
 
-  const files = new Map((coreResult.data as CloudFile[]).map((file) => [file.path, file.content]));
-  for (const prerequisite of prerequisiteResult.data as Array<{ path: string }>) files.set(prerequisite.path, "");
+  const files = new Map((workspace.files ?? []).map((file) => [file.path, file.content]));
+  for (const prerequisite of workspace.prerequisites ?? []) {
+    if (!files.has(prerequisite.path)) files.set(prerequisite.path, "");
+  }
   const applications = parseApplicationsWithAliases(files.get("data/applications.md") ?? "", aliases(files));
   const scanDates = parseScanDates(files.get("data/scan-history.tsv") ?? "");
   const inbox = parseInbox(files.get("data/pipeline.md") ?? "").map((job) => ({

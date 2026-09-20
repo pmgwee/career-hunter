@@ -1,28 +1,17 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { Check, Loader2 } from "lucide-react";
 import { cn } from "@/lib/cn";
 
-export function CvEditor() {
-  const [content, setContent] = useState("");
-  const [loaded, setLoaded] = useState(false);
-  const [exists, setExists] = useState(true);
+export function CvEditor({ initialContent, initialExists }: { initialContent: string; initialExists: boolean }) {
+  const [content, setContent] = useState(initialContent);
+  const [exists, setExists] = useState(initialExists);
   const [dirty, setDirty] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
-
-  useEffect(() => {
-    fetch("/api/cv")
-      .then((r) => r.json())
-      .then((d) => {
-        setContent(d.content ?? "");
-        setExists(d.exists ?? false);
-      })
-      .finally(() => setLoaded(true));
-  }, []);
 
   async function save() {
     setSaving(true);
@@ -50,7 +39,7 @@ export function CvEditor() {
           <h1 className="font-display text-2xl tracking-tight text-landing">CV editor</h1>
           <p className="mt-1 text-sm text-muted">
             Edit <code className="text-foreground">cv.md</code> with live preview.
-            {!exists && loaded && <span className="ml-1 text-faint">No cv.md yet — start typing to create it.</span>}
+            {!exists && <span className="ml-1 text-faint">No cv.md yet — start typing to create it.</span>}
           </p>
         </div>
         <button
@@ -69,10 +58,7 @@ export function CvEditor() {
         </button>
       </div>
 
-      {!loaded ? (
-        <div className="mt-6 text-sm text-muted">Loading…</div>
-      ) : (
-        <div className="mt-6 grid gap-4 lg:grid-cols-2">
+      <div className="mt-6 grid gap-4 lg:grid-cols-2">
           <textarea
             value={content}
             onChange={(e) => {
@@ -90,8 +76,7 @@ export function CvEditor() {
               <p className="text-muted">Preview appears here.</p>
             )}
           </article>
-        </div>
-      )}
+      </div>
     </div>
   );
 }

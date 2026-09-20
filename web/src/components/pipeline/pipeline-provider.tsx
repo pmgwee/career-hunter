@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useCallback, useContext, useEffect, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
 import type { Application, InboxJob } from "@/lib/career-ops";
 
 // A thin client mirror of the pipeline so BOTH the pages and the assistant
@@ -26,8 +26,10 @@ export function PipelineProvider({ children }: { children: React.ReactNode }) {
   const [inbox, setInbox] = useState<InboxJob[]>([]);
   const [applications, setApplications] = useState<Application[]>([]);
   const [loading, setLoading] = useState(true);
+  const lastFetchedAt = useRef(0);
 
   const refetch = useCallback(() => {
+    lastFetchedAt.current = Date.now();
     setLoading(true);
     fetch("/api/pipeline")
       .then((r) => r.json())
@@ -44,7 +46,12 @@ export function PipelineProvider({ children }: { children: React.ReactNode }) {
   }, [refetch]);
 
   useEffect(() => {
-    const onFocus = () => refetch();
+    // A browser focus event can fire repeatedly while switching tabs or using
+    // devtools. Do not launch a second full workspace read while the mount
+    // request is still warm; explicit refetch() calls after writes still run.
+    const onFocus = () => {
+      if (Date.now() - lastFetchedAt.current >= 30_000) refetch();
+    };
     window.addEventListener("focus", onFocus);
     return () => window.removeEventListener("focus", onFocus);
   }, [refetch]);

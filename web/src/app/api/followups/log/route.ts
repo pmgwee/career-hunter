@@ -1,8 +1,7 @@
-import fs from "node:fs";
-import path from "node:path";
-import { atomicWrite } from "@/lib/core/safe-write";
 import { CHANNELS, isRealISODate, localISODate } from "@/lib/followups";
-import { followupsLogPath, withFollowupsWrite, followupsWriteError } from "@/lib/followups-server";
+import { withLogLock, followupsWriteError } from "@/lib/followups-server";
+import { loadCareerWorkspace } from "@/lib/workspace/snapshot";
+import { writeWorkspaceFiles } from "@/lib/workspace/write-files";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -67,13 +66,10 @@ export async function POST(req: Request) {
   const contact = cell(body.contact, 120);
   const notes = cell(body.notes ?? body.note ?? "");
 
-  const file = followupsLogPath();
   try {
-    return await withFollowupsWrite(() => {
-      fs.mkdirSync(path.dirname(file), { recursive: true });
-      let existing = "";
-      if (fs.existsSync(file)) existing = fs.readFileSync(file, "utf8");
-      else fs.writeFileSync(file, "# Follow-ups\n\n", "utf8");
+    return await withLogLock(async () => {
+      const snapshot = await loadCareerWorkspace({ includeFilePaths: ["data/follow-ups.md"] });
+      const existing = snapshot.files.get("data/follow-ups.md") ?? "# Follow-ups\n\n";
 
       // Auto-increment num = max existing TABLE num + 1 (legacy bullets carry none).
       let maxNum = 0;
@@ -96,7 +92,7 @@ export async function POST(req: Request) {
       if (existing && !existing.endsWith("\n")) out += "\n";
       if (!hasHeader) out += TABLE_HEADER;
       out += `| ${num} | ${appNum} | ${date} | ${company} | ${role} | ${channel} | ${contact} | ${notes} |\n`;
-      fs.appendFileSync(file, out, "utf8");
+      await writeWorkspaceFiles(snapshot, [{ path: "data/follow-ups.md", content: existing + out, contentType: "text/markdown; charset=utf-8" }]);
       return Response.json({ ok: true, num, appNum, date, channel });
     });
   } catch (e) {
@@ -118,11 +114,12 @@ export async function DELETE(req: Request) {
   const num = Number.parseInt(String(body.num ?? ""), 10);
   if (!Number.isInteger(num) || num <= 0) return Response.json({ error: "num required" }, { status: 400 });
 
-  const file = followupsLogPath();
-  if (!fs.existsSync(file)) return Response.json({ error: "no follow-up log" }, { status: 404 });
   try {
-    return await withFollowupsWrite(() => {
-      const lines = fs.readFileSync(file, "utf8").split("\n");
+    return await withLogLock(async () => {
+      const snapshot = await loadCareerWorkspace({ includeFilePaths: ["data/follow-ups.md"] });
+      const existing = snapshot.files.get("data/follow-ups.md");
+      if (existing == null) return Response.json({ error: "no follow-up log" }, { status: 404 });
+      const lines = existing.split("\n");
       const idx = lines.findIndex((line) => {
         if (!line.startsWith("|")) return false;
         const first = line.split("|")[1]?.trim() ?? "";
@@ -130,7 +127,7 @@ export async function DELETE(req: Request) {
       });
       if (idx === -1) return Response.json({ error: `follow-up #${num} not found` }, { status: 404 });
       lines.splice(idx, 1);
-      atomicWrite(file, lines.join("\n"));
+      await writeWorkspaceFiles(snapshot, [{ path: "data/follow-ups.md", content: lines.join("\n"), contentType: "text/markdown; charset=utf-8" }]);
       return Response.json({ ok: true, num });
     });
   } catch (e) {

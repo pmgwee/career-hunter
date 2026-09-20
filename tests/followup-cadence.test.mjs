@@ -64,6 +64,7 @@ const {
   normalizeStatus,
   resolveCadenceConfig,
   loadProfileCadence,
+  parseProfileCadenceContent,
   parseAppliedDaysOverride,
 } = cadence;
 
@@ -216,6 +217,44 @@ eq(
   'analyzeFromContent defaults followupsContent to empty string when omitted',
   missingFollowupsArg.entries.some((e) => e.urgency === 'cold'),
   false,
+);
+
+// Cloud/server consumers hold config/profile.yml as content, not as a local
+// filesystem path. They must be able to run the exact same engine with those
+// overrides instead of silently falling back to this process's profile.
+const cloudProfile = [
+  'followup_cadence:',
+  '  applied_first_days: 2',
+  '  applied_subsequent_days: 4',
+  '  applied_max_followups: 1',
+  '  responded_initial_days: 1',
+  '  responded_subsequent_days: 5',
+  '  interview_thankyou_days: 1',
+].join('\n');
+eq(
+  'parseProfileCadenceContent reads cloud profile overrides without a file path',
+  parseProfileCadenceContent(cloudProfile),
+  {
+    applied_first: 2,
+    applied_subsequent: 4,
+    applied_max_followups: 1,
+    responded_initial: 1,
+    responded_subsequent: 5,
+    interview_thankyou: 1,
+  },
+);
+const cloudCadence = analyzeFromContent(trackerMd, followupsMd, { profileContent: cloudProfile });
+eq(
+  'analyzeFromContent applies cloud profile content to the effective cadence',
+  cloudCadence.cadenceConfig,
+  {
+    applied_first: 2,
+    applied_subsequent: 4,
+    applied_max_followups: 1,
+    responded_initial: 1,
+    responded_subsequent: 5,
+    interview_thankyou: 1,
+  },
 );
 
 // Hired aliases from templates/states.yml must normalize to 'hired'. Before

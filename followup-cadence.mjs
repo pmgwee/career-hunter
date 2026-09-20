@@ -78,9 +78,18 @@ function positiveInteger(value) {
 
 export function loadProfileCadence(profilePath = PROFILE_FILE) {
   if (!profilePath || !existsSync(profilePath)) return {};
+  try {
+    return parseProfileCadenceContent(readFileSync(profilePath, 'utf-8'));
+  } catch {
+    return {};
+  }
+}
+
+/** Parse follow-up cadence overrides from an in-memory profile.yml. */
+export function parseProfileCadenceContent(profileContent = '') {
   let raw;
   try {
-    raw = yaml.load(readFileSync(profilePath, 'utf-8')) || {};
+    raw = yaml.load(String(profileContent ?? '')) || {};
   } catch {
     return {};
   }
@@ -605,9 +614,18 @@ function splitStatements(notes) {
  */
 export function loadSelfIdentities(profilePath = PROFILE_FILE) {
   if (!profilePath || !existsSync(profilePath)) return new Set();
+  try {
+    return parseSelfIdentitiesContent(readFileSync(profilePath, 'utf-8'));
+  } catch {
+    return new Set();
+  }
+}
+
+/** Parse candidate email identities from an in-memory profile.yml. */
+export function parseSelfIdentitiesContent(profileContent = '') {
   let raw;
   try {
-    raw = yaml.load(readFileSync(profilePath, 'utf-8')) || {};
+    raw = yaml.load(String(profileContent ?? '')) || {};
   } catch {
     return new Set();
   }
@@ -739,47 +757,47 @@ export function resolveReportPath(reportField, appsFile = APPS_FILE, repoRoot = 
 // days) — matching the cadence table in modes/followup.md ("Responded: every
 // 3 days · Assessment uses the responded cadence · Interview: thank-you, then
 // every 3 days, no limit").
-export function computeUrgency(status, daysSinceApp, daysSinceLastFollowup, followupCount) {
+export function computeUrgency(status, daysSinceApp, daysSinceLastFollowup, followupCount, cadence = CADENCE) {
   if (status === 'applied') {
-    if (followupCount >= CADENCE.applied_max_followups) return 'cold';
-    if (followupCount === 0 && daysSinceApp >= CADENCE.applied_first) return 'overdue';
-    if (followupCount > 0 && daysSinceLastFollowup !== null && daysSinceLastFollowup >= CADENCE.applied_subsequent) return 'overdue';
+    if (followupCount >= cadence.applied_max_followups) return 'cold';
+    if (followupCount === 0 && daysSinceApp >= cadence.applied_first) return 'overdue';
+    if (followupCount > 0 && daysSinceLastFollowup !== null && daysSinceLastFollowup >= cadence.applied_subsequent) return 'overdue';
     return 'waiting';
   }
   if (status === 'responded' || status === 'assessment') {
     if (daysSinceLastFollowup !== null) {
-      return daysSinceLastFollowup >= CADENCE.responded_subsequent ? 'overdue' : 'waiting';
+      return daysSinceLastFollowup >= cadence.responded_subsequent ? 'overdue' : 'waiting';
     }
-    if (daysSinceApp < CADENCE.responded_initial) return 'urgent';
-    if (daysSinceApp >= CADENCE.responded_subsequent) return 'overdue';
+    if (daysSinceApp < cadence.responded_initial) return 'urgent';
+    if (daysSinceApp >= cadence.responded_subsequent) return 'overdue';
     return 'waiting';
   }
   if (status === 'interview') {
     if (daysSinceLastFollowup !== null) {
-      return daysSinceLastFollowup >= CADENCE.responded_subsequent ? 'overdue' : 'waiting';
+      return daysSinceLastFollowup >= cadence.responded_subsequent ? 'overdue' : 'waiting';
     }
-    return daysSinceApp >= CADENCE.interview_thankyou ? 'overdue' : 'waiting';
+    return daysSinceApp >= cadence.interview_thankyou ? 'overdue' : 'waiting';
   }
   return 'waiting';
 }
 
 // --- Compute next follow-up date ---
-export function computeNextFollowupDate(status, appDate, lastFollowupDate, followupCount) {
+export function computeNextFollowupDate(status, appDate, lastFollowupDate, followupCount, cadence = CADENCE) {
   if (status === 'applied') {
-    if (followupCount >= CADENCE.applied_max_followups) return null; // cold
-    if (followupCount === 0) return addDays(parseDate(appDate), CADENCE.applied_first);
-    if (lastFollowupDate) return addDays(parseDate(lastFollowupDate), CADENCE.applied_subsequent);
-    return addDays(parseDate(appDate), CADENCE.applied_first);
+    if (followupCount >= cadence.applied_max_followups) return null; // cold
+    if (followupCount === 0) return addDays(parseDate(appDate), cadence.applied_first);
+    if (lastFollowupDate) return addDays(parseDate(lastFollowupDate), cadence.applied_subsequent);
+    return addDays(parseDate(appDate), cadence.applied_first);
   }
   if (status === 'responded' || status === 'assessment') {
-    if (lastFollowupDate) return addDays(parseDate(lastFollowupDate), CADENCE.responded_subsequent);
-    return addDays(parseDate(appDate), CADENCE.responded_initial);
+    if (lastFollowupDate) return addDays(parseDate(lastFollowupDate), cadence.responded_subsequent);
+    return addDays(parseDate(appDate), cadence.responded_initial);
   }
   if (status === 'interview') {
     // After the thank-you is logged, subsequent touches follow the responded
     // cadence (modes/followup.md: "Every 3 days · No limit").
-    if (lastFollowupDate) return addDays(parseDate(lastFollowupDate), CADENCE.responded_subsequent);
-    return addDays(parseDate(appDate), CADENCE.interview_thankyou);
+    if (lastFollowupDate) return addDays(parseDate(lastFollowupDate), cadence.responded_subsequent);
+    return addDays(parseDate(appDate), cadence.interview_thankyou);
   }
   return null;
 }
@@ -793,12 +811,19 @@ export function computeNextFollowupDate(status, appDate, lastFollowupDate, follo
 // requires followupCount >= applied_max_followups) simply never triggers —
 // no error, no guessing, matching the same "absent optional file = pass
 // through" convention used elsewhere in this project.
-export function analyzeFromContent(trackerContent, followupsContent = '') {
+export function analyzeFromContent(trackerContent, followupsContent = '', options = {}) {
   const apps = parseTrackerContent(trackerContent);
   if (apps.length === 0) {
     return { error: 'No applications found in tracker.' };
   }
 
+  const hasProfileContent = Object.prototype.hasOwnProperty.call(options, 'profileContent');
+  const cadence = hasProfileContent
+    ? { ...DEFAULT_CADENCE, ...parseProfileCadenceContent(options.profileContent) }
+    : CADENCE;
+  const selfIdentities = hasProfileContent
+    ? parseSelfIdentitiesContent(options.profileContent)
+    : SELF_IDENTITIES;
   const followups = parseFollowups(followupsContent);
   const overrides = parseNextOverrides(String(followupsContent ?? ''));
   const cleared = parseClearedDirectives(followupsContent);
@@ -839,8 +864,8 @@ export function analyzeFromContent(trackerContent, followupsContent = '') {
       if (lastDate) daysSinceLastFollowup = daysBetween(lastDate, now);
     }
 
-    let urgency = computeUrgency(normalized, daysSinceApp, daysSinceLastFollowup, followupCount);
-    let nextFollowupDate = computeNextFollowupDate(normalized, appliedDate, lastFollowupDate, followupCount);
+    let urgency = computeUrgency(normalized, daysSinceApp, daysSinceLastFollowup, followupCount, cadence);
+    let nextFollowupDate = computeNextFollowupDate(normalized, appliedDate, lastFollowupDate, followupCount, cadence);
 
     // A pinned next-date takes precedence over the computed cadence (explicit
     // user intent — it even revives a cold application) until a follow-up
@@ -862,8 +887,10 @@ export function analyzeFromContent(trackerContent, followupsContent = '') {
     const nextDate = nextFollowupDate ? parseDate(nextFollowupDate) : null;
     const daysUntilNext = nextDate ? daysBetween(now, nextDate) : null;
 
-    const contacts = extractContacts(app.notes);
-    const reportPath = resolveReportPath(app.report);
+    const contacts = extractContacts(app.notes, selfIdentities);
+    const reportPath = typeof options.resolveReportPath === 'function'
+      ? options.resolveReportPath(app.report)
+      : resolveReportPath(app.report);
 
     entries.push({
       num: app.num,
@@ -920,7 +947,7 @@ export function analyzeFromContent(trackerContent, followupsContent = '') {
       retired: retiredCount,
     },
     entries: filtered,
-    cadenceConfig: CADENCE,
+    cadenceConfig: cadence,
     // The EFFECTIVE cadence above is defaults+profile overrides. Consumers that
     // need to show what a value would be WITHOUT the user's override (the web
     // settings form's placeholder) need the pure defaults too — sourcing that

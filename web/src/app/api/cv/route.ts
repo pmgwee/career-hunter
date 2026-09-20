@@ -1,18 +1,13 @@
 import { NextResponse } from "next/server";
-import fs from "node:fs";
-import path from "node:path";
-import { careerOpsRoot } from "@/lib/career-ops";
-import { atomicWriteWithBackup } from "@/lib/core/safe-write";
-
-function cvPath() {
-  return path.join(careerOpsRoot(), "cv.md");
-}
+import { loadCareerWorkspace } from "@/lib/workspace/snapshot";
+import { writeWorkspaceFiles } from "@/lib/workspace/write-files";
 
 const MAX_CV_BYTES = 200_000;
 
 export async function GET() {
   try {
-    return NextResponse.json({ content: fs.readFileSync(cvPath(), "utf8"), exists: true });
+    const snapshot = await loadCareerWorkspace({ includeFilePaths: ["cv.md"] });
+    return NextResponse.json({ content: snapshot.files.get("cv.md") ?? "", exists: snapshot.files.has("cv.md") });
   } catch {
     return NextResponse.json({ content: "", exists: false });
   }
@@ -31,12 +26,11 @@ export async function POST(req: Request) {
   if (Buffer.byteLength(body.content, "utf8") > MAX_CV_BYTES) {
     return NextResponse.json({ error: "CV is too large (over 200KB)" }, { status: 413 });
   }
-  // DATA_CONTRACT: cv.md is user-layer and gitignored (no git recovery). Never
-  // blind-overwrite — snapshot the prior CV to a .bak first, write atomically.
   try {
-    const bak = atomicWriteWithBackup(cvPath(), body.content);
-    return NextResponse.json({ ok: true, backedUp: !!bak });
-  } catch {
-    return NextResponse.json({ error: "write failed" }, { status: 500 });
+    const snapshot = await loadCareerWorkspace({ includeFilePaths: ["cv.md"] });
+    await writeWorkspaceFiles(snapshot, [{ path: "cv.md", content: body.content, contentType: "text/markdown; charset=utf-8" }]);
+    return NextResponse.json({ ok: true, versioned: true });
+  } catch (error) {
+    return NextResponse.json({ error: error instanceof Error ? error.message : "write failed" }, { status: 500 });
   }
 }

@@ -12,7 +12,7 @@
  * leading pipe, so the first real column ("#"/num) is index 1.
  */
 
-import { readFileSync } from 'fs';
+import TRACKER_ALIASES from './tracker-aliases.json' with { type: 'json' };
 
 /** The original fixed 9-column layout (num … notes at indices 1 … 9). */
 export const LEGACY_COLMAP = {
@@ -32,18 +32,7 @@ export const LEGACY_COLMAP = {
  * (The web loader degrades to the legacy fixed order instead because it reads
  * the file from a user-configured root at request time.)
  */
-export const HEADER_ALIASES = (() => {
-  const src = new URL('./tracker-aliases.json', import.meta.url);
-  try {
-    return JSON.parse(readFileSync(src, 'utf-8'));
-  } catch (e) {
-    throw new Error(
-      `tracker-parse.mjs: cannot load tracker-aliases.json (${e.message}). ` +
-      'The file ships with career-ops next to tracker-parse.mjs — restore it ' +
-      'from the repo or re-run: node update-system.mjs apply',
-    );
-  }
-})();
+export const HEADER_ALIASES = TRACKER_ALIASES;
 
 /**
  * A score cell in the tracker: `N/5` or `N.N/5` (any precision), or the
