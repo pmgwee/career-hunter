@@ -16,6 +16,16 @@ This workspace uses one local project folder per remote repository:
 
 All branches for a repository stay in that repository's existing folder. Before editing, identify the folder whose `origin` matches the target remote, then use `git switch` or `git switch -c` there. Routine development uses the existing checkout: do not create per-branch sibling folders, managed worktrees, or additional clones. Create an isolated checkout only when the user explicitly requests one. Before any checkout creation, inspect the existing remotes and worktrees so the one-folder-per-remote rule is preserved.
 
+## Development Target Matrix (MANDATORY)
+
+Use these targets for every enhancement:
+
+1. `career-ops` on `main` is the local workspace for `npm run dev` at `http://localhost:3000`. Local-workspace changes belong here and should preserve the pre-cloud local workflow.
+2. `career-ops` on `codex/perf-cloud-latency` is the deployment branch for `https://career-hunter-nine.vercel.app/`. Vercel-production changes belong here until the user explicitly approves merging them to `main`.
+3. `career-ops-contrib` and `career-ops-docs` are upstream-contribution folders for `career-ops-hq`. Do not implement upstream contribution changes in those folders from this session. Instead, provide a copy-paste handoff prompt for the user's `PR Bot(Career-Ops-HQ)` task at `codex://threads/01a0b9f4-72c3-7f83-82d7-6e5e5a9f2537`.
+
+Every upstream handoff prompt must include: the enhancement summary and user-visible reason; source repository, branch, commit hashes, changed files, and relevant diff intent; validation commands and results; current `git status`, `git log`, remote URLs, and `git worktree list` evidence; data/security or compatibility notes; and explicit exclusions for local-only files or behavior. The PR Bot owns creating the upstream issue, branch, and pull request.
+
 ## Data Contract (CRITICAL)
 
 Two layers — full list in `DATA_CONTRACT.md`:
