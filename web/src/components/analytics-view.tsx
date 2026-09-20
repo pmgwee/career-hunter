@@ -5,7 +5,7 @@ import Link from "next/link";
 import { ArrowUpRight, BarChart3, BriefcaseBusiness, CircleDollarSign, MapPin, Sparkles, Target } from "lucide-react";
 import type { AnalyticsApplication } from "@/lib/analytics-data";
 import { PageFrame } from "@/components/page-frame";
-import { AnalyticsPageSkeleton } from "@/components/page-loading-skeletons";
+import { AnalyticsContentSkeleton } from "@/components/page-loading-skeletons";
 import { startRouteProgress } from "@/components/route-progress";
 
 type ProgressMetrics = {
@@ -54,8 +54,6 @@ export function AnalyticsView({
     if (pendingTab === tab) setPendingTab(null);
   }, [pendingTab, tab]);
 
-  if (loadingTab) return <AnalyticsPageSkeleton tab={loadingTab} />;
-
   return (
     <PageFrame>
       <header className="flex flex-col gap-5 border-b border-border pb-5 sm:flex-row sm:items-end sm:justify-between">
@@ -97,7 +95,7 @@ export function AnalyticsView({
         </AnalyticsTab>
       </nav>
 
-      {tab === "progress" ? <ProgressPanel metrics={progress} /> : <StatsPanel metrics={stats} insights={insights} />}
+      {loadingTab ? <AnalyticsContentSkeleton tab={loadingTab} /> : tab === "progress" ? <ProgressPanel metrics={progress} /> : <StatsPanel metrics={stats} insights={insights} />}
     </PageFrame>
   );
 }

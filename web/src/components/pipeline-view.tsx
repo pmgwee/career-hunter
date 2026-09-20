@@ -11,7 +11,7 @@ import { canonStatus, scoreNum, scoreTone, statusDot } from "@/lib/format";
 import { InboxTriage } from "@/components/inbox/inbox-triage";
 import { cn } from "@/lib/cn";
 import { PageFrame } from "@/components/page-frame";
-import { PipelinePageSkeleton } from "@/components/page-loading-skeletons";
+import { PipelineTableRowsSkeleton } from "@/components/page-loading-skeletons";
 import { startRouteProgress } from "@/components/route-progress";
 
 // INBOX (the triage queue) is the default tab; the rest filter the tracker.
@@ -45,12 +45,14 @@ export function PipelineView({
   const router = useRouter();
   const pathname = usePathname();
   const [isPending, startTransition] = useTransition();
+  const [pendingTab, setPendingTab] = useState<Tab | null>(null);
 
   // The URL is the SINGLE source of truth for tab/min/sort/dir, so the home stat
   // tiles' deep links AND the assistant's filterPipeline/navigate actions drive
   // the table identically (no useState mirror → no desync).
   const pTab = (params.get("tab") ?? "").toUpperCase();
   const tab: Tab = (TABS as readonly string[]).includes(pTab) ? (pTab as Tab) : "INBOX";
+  const visibleTab = isPending && pendingTab ? pendingTab : tab;
   const pMin = parseFloat(params.get("min") ?? "");
   const minFilter: number | null = Number.isFinite(pMin) ? pMin : null;
   const pSort = params.get("sort") ?? "";
@@ -78,6 +80,10 @@ export function PipelineView({
       }
       const qs = sp.toString();
       if (qs === params.toString()) return;
+      if (Object.prototype.hasOwnProperty.call(updates, "tab")) {
+        const nextTab = String(updates.tab ?? "INBOX").toUpperCase();
+        if ((TABS as readonly string[]).includes(nextTab)) setPendingTab(nextTab as Tab);
+      }
       startRouteProgress();
       startTransition(() => {
         router.replace(`${pathname}${qs ? `?${qs}` : ""}`, { scroll: false });
@@ -85,6 +91,10 @@ export function PipelineView({
     },
     [params, router, pathname, startTransition],
   );
+
+  useEffect(() => {
+    if (!isPending) setPendingTab(null);
+  }, [isPending]);
 
   // Pending + deduped by URL (pipeline.md can list the same posting twice) so the
   // header count, the tab count and the triage list all agree on one number.
@@ -125,8 +135,6 @@ export function PipelineView({
     });
   }, [applications, tab, q, sort, minFilter]);
 
-  if (isPending) return <PipelinePageSkeleton />;
-
   return (
     <PageFrame>
       <div className="flex items-end justify-between gap-4">
@@ -138,7 +146,7 @@ export function PipelineView({
           </p>
         </div>
         {/* the tracker has its own search; the inbox brings its own facet filters */}
-        {tab !== "INBOX" && (
+        {visibleTab !== "INBOX" && (
           <div className="relative w-64 max-w-[40vw]">
             <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-faint" />
             <input
@@ -166,7 +174,7 @@ export function PipelineView({
               onClick={() => setParams({ tab: t === "INBOX" ? null : t })}
               className={cn(
                 "-mb-px inline-flex items-center justify-center border-b-2 px-3 py-2 text-xs font-medium transition-colors max-sm:min-h-[44px]",
-                tab === t
+                visibleTab === t
                   ? "border-brand text-foreground"
                   : "border-transparent text-muted hover:text-foreground",
               )}
@@ -177,7 +185,7 @@ export function PipelineView({
         })}
       </div>
 
-      {tab !== "INBOX" && minFilter != null && (
+      {visibleTab !== "INBOX" && minFilter != null && (
         <div className="mt-3 flex items-center gap-2">
           <span className="text-xs text-faint">Filtered:</span>
           <button
@@ -192,14 +200,14 @@ export function PipelineView({
         </div>
       )}
 
-      {tab === "INBOX" ? (
+      {visibleTab === "INBOX" ? (
         /* ── Inbox: the triage surface (Abundance → Triage → Shortlist → Score) ── */
         pendingInbox.length > 0 ? (
           <InboxTriage inbox={pendingInbox} />
         ) : (
           <InboxEmpty count={0} filtered={false} />
         )
-      ) : filtered.length > 0 ? (
+      ) : isPending || filtered.length > 0 ? (
         /* ── Tracker table ──
            overflow-x-auto, not overflow-hidden: the rounded corners still clip,
            but a table too wide for the viewport can now be scrolled to instead
@@ -223,8 +231,8 @@ export function PipelineView({
                 ))}
               </tr>
             </thead>
-            <tbody className="divide-y divide-border">
-              {filtered.map((r, i) => (
+            <tbody className="divide-y divide-border" aria-busy={isPending}>
+              {isPending ? <PipelineTableRowsSkeleton /> : filtered.map((r, i) => (
                 <tr key={`${r.n}-${i}`} className="group transition-colors hover:bg-surface/40">
                   <td className="px-4 py-3 font-medium">
                     <Link href={`/pipeline/${r.n}`} className="flex items-center gap-2.5 transition-colors group-hover:text-brand">
