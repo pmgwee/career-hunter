@@ -29,13 +29,12 @@ function moneyNumber(value: string, suffix = ""): number {
   return numeric;
 }
 
-function highestMoney(text: string, allowBare = false): { value: number; source: "POSTED" | "est" | "" } {
+function highestMoney(text: string): { value: number; source: "POSTED" | "est" | "" } {
   let highest = 0;
   let source: "POSTED" | "est" | "" = "";
   for (const match of text.matchAll(MONEY)) {
-    const hasCurrency = Boolean(match[0].match(/[$€£¥₹₺₩]|\b(?:USD|EUR|GBP|PLN|CHF|SGD|AUD|CAD)\b/));
-    const hasCurrencyOrSuffix = Boolean(match[0].match(/[$€£¥₹₺₩]|\b(?:USD|EUR|GBP|PLN|CHF|SGD|AUD|CAD)\b|[KkMmBb]/));
-    if (!allowBare && !hasCurrencyOrSuffix) continue;
+    const hasCurrency = Boolean(match[0].match(/\$|\bUSD\b/));
+    if (!hasCurrency) continue;
     const before = text.slice(Math.max(0, (match.index ?? 0) - 8), match.index ?? 0);
     const after = text.slice((match.index ?? 0) + match[0].length, (match.index ?? 0) + match[0].length + 8);
     if (NON_USD_CURRENCY.test(before) || NON_USD_CURRENCY.test(after)) continue;
@@ -73,8 +72,10 @@ function normalizeWorkMode(raw: string, text: string): string {
 }
 
 function fallbackLocation(text: string): string {
-  const cityState = text.match(/\b([A-Z][A-Za-z.'-]+(?: [A-Z][A-Za-z.'-]+){0,2}),? (?:A[KLRZ]|C[AOT]|D[CE]|FL|GA|HI|I[ADLN]|K[SY]|LA|M[ADEINOST]|N[CDEHJMVY]|O[HKR]|PA|RI|S[CD]|T[NX]|UT|V[AT]|W[AIVY])\b/);
-  if (cityState?.[1]) return cityState[1];
+  // Require the comma so prose such as "Apply to one team" cannot be
+  // mistaken for a US city/state pair. Also reject short all-caps acronyms.
+  const cityState = text.match(/\b([A-Z][A-Za-z.'-]+(?: [A-Z][A-Za-z.'-]+){0,2}),\s*(?:A[KLRZ]|C[AOT]|D[CE]|FL|GA|HI|I[ADLN]|K[SY]|LA|M[ADEINOST]|N[CDEHJMVY]|O[HKR]|PA|RI|S[CD]|T[NX]|UT|V[AT]|W[AIVY])\b/);
+  if (cityState?.[1] && !(cityState[1].length <= 3 && cityState[1] === cityState[1].toUpperCase())) return cityState[1];
   const cities = text.match(/\b(Porto|Lisbon|London|Berlin|Munich|München|Hamburg|Frankfurt|Cologne|Düsseldorf|Dusseldorf|Stuttgart|Zurich|Zürich|Geneva|Lausanne|Basel|Dublin|Cork|Amsterdam|Rotterdam|Eindhoven|Utrecht|Paris|Lyon|Madrid|Barcelona|Valencia|Stockholm|Gothenburg|Malmö|Malmo|Copenhagen|Oslo|Helsinki|Milan|Rome|Turin|Vienna|Brussels|Ghent|Antwerp|Luxembourg|Warsaw|Kraków|Krakow|Wrocław|Wroclaw|Tallinn|Riga|Vilnius|Prague|Brno|Budapest|Bucharest|Sofia|Athens|Bengaluru|Bangalore|Singapore|Sydney|Toronto|Vancouver|Tel Aviv|São Paulo|Sao Paulo|Kuala Lumpur|Petaling Jaya|Cyberjaya)\b/i);
   return cities?.[1] ?? "";
 }
@@ -90,26 +91,31 @@ function reportFields(content: string, fallbackArchetype: string) {
   const location = scalar(machine, "location") || explicitLocation || fallbackLocation(content);
   const workMode = normalizeWorkMode(scalar(machine, "work_mode"), "");
   const compensation = [scalar(machine, "advertised_comp"), scalar(machine, "comp_estimate_myr_month"), scalar(machine, "compensation")].filter(Boolean).join(" ");
-  const pay = highestMoney(compensation, true);
+  const pay = highestMoney(compensation);
   return { archetype, location, workMode, payMax: pay.value, paySource: pay.source };
 }
 
-function fromApplication(app: Application): AnalyticsApplication {
-  const report = readReport(app.n);
+/** Pure enrichment counterpart used by analytics tests and alternate callers. */
+export function enrichAnalyticsApplication(app: Application, reportContent = ""): AnalyticsApplication {
   const notes = app.notes ?? "";
-  const content = report?.content ?? "";
-  const derived = reportFields(content, "");
+  const derived = reportFields(reportContent, "");
   const notePay = highestMoney(notes);
   const combinedText = `${app.role} ${notes}`;
   const noteLocation = fallbackLocation(notes);
   return {
     ...app,
     archetype: derived.archetype,
-    location: derived.location || noteLocation,
+    // Tracker notes are the authoritative analytics location; report prose is
+    // too free-form to safely infer a location from.
+    location: noteLocation,
     workMode: derived.workMode || normalizeWorkMode("", combinedText),
     payMax: notePay.value || derived.payMax,
     paySource: notePay.value ? notePay.source : derived.paySource,
   };
+}
+
+function fromApplication(app: Application): AnalyticsApplication {
+  return enrichAnalyticsApplication(app, readReport(app.n)?.content ?? "");
 }
 
 /** Read-only enrichment of tracker rows for Analytics. */
