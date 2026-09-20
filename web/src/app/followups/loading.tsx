@@ -2,39 +2,50 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 export default function FollowupsLoading() {
   return (
-    <div className="mx-auto max-w-6xl px-4 py-6 sm:px-6 sm:py-8 max-sm:pb-24" aria-label="Loading follow-ups">
-      <div className="flex flex-col gap-4 border-b border-border pb-5 sm:flex-row sm:items-end sm:justify-between">
-        <div className="space-y-2">
-          <Skeleton className="h-8 w-40" />
-          <Skeleton className="h-4 w-96 max-w-full" />
+    <div className="mx-auto max-w-none px-6 py-8" aria-label="Loading follow-ups">
+      <div className="flex items-end justify-between gap-4">
+        <div>
+          <Skeleton className="h-8 w-48" />
+          <Skeleton className="mt-2 h-4 w-64" />
+          <Skeleton className="mt-3 h-3 w-full max-w-3xl" />
+          <Skeleton className="mt-1 h-3 w-4/5 max-w-2xl" />
         </div>
-        <Skeleton className="h-9 w-32 rounded-full" />
+        <Skeleton className="h-9 w-56 max-w-[35vw] rounded-md" />
       </div>
-      <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
-        {Array.from({ length: 4 }).map((_, i) => (
-          <div key={i} className="rounded-2xl border border-border bg-surface/40 p-4">
-            <Skeleton className="h-3 w-20" />
-            <Skeleton className="mt-3 h-8 w-12" />
-          </div>
-        ))}
+
+      <div className="mt-6 flex flex-wrap gap-1 border-b border-border">
+        {Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-8 w-20 rounded-sm" />)}
       </div>
-      <div className="mt-5 rounded-2xl border border-border bg-surface/40 p-4">
-        <div className="flex flex-wrap gap-2">
-          {Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-8 w-24 rounded-full" />)}
-        </div>
-        <div className="mt-5 divide-y divide-border">
-          {Array.from({ length: 6 }).map((_, i) => (
-            <div key={i} className="flex items-center gap-3 py-4">
-              <Skeleton className="size-9 rounded-full" />
-              <div className="min-w-0 flex-1 space-y-2">
-                <Skeleton className="h-4 w-2/3" />
-                <Skeleton className="h-3 w-1/2" />
-              </div>
-              <Skeleton className="hidden h-8 w-24 rounded-full sm:block" />
-              <Skeleton className="h-4 w-16" />
-            </div>
-          ))}
-        </div>
+
+      <div className="mt-4 overflow-x-auto rounded-2xl border border-border">
+        <table className="w-full min-w-[880px] text-sm">
+          <thead className="bg-surface/60 text-left text-xs uppercase tracking-wide text-faint">
+            <tr>
+              <th className="w-8 px-2 py-2.5"><Skeleton className="h-3 w-3" /></th>
+              {Array.from({ length: 10 }).map((_, i) => (
+                <th key={i} className="px-2.5 py-2.5"><Skeleton className="h-3" style={{ width: `${40 + (i % 3) * 18}px` }} /></th>
+              ))}
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-border">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <tr key={i}>
+                <td className="px-2 py-3"><Skeleton className="size-4 rounded-sm" /></td>
+                <td className="px-2.5 py-3"><div className="flex items-center gap-2.5"><Skeleton className="size-5 rounded-full" /><Skeleton className="h-4 w-24" /></div></td>
+                <td className="px-2.5 py-3"><Skeleton className="h-4 w-32" /></td>
+                <td className="px-2.5 py-3"><Skeleton className="h-5 w-12 rounded-full" /></td>
+                <td className="px-2.5 py-3"><Skeleton className="h-5 w-20 rounded-md" /></td>
+                <td className="px-2.5 py-3"><Skeleton className="h-5 w-16 rounded-full" /></td>
+                <td className="px-2.5 py-3"><Skeleton className="h-4 w-8" /></td>
+                <td className="px-2.5 py-3"><Skeleton className="h-4 w-16" /></td>
+                <td className="px-2.5 py-3"><Skeleton className="h-4 w-8" /></td>
+                <td className="px-2.5 py-3"><Skeleton className="h-4 w-8" /></td>
+                <td className="px-2.5 py-3"><Skeleton className="h-6 w-20 rounded-md" /></td>
+                <td className="px-2.5 py-3"><Skeleton className="h-4 w-8" /></td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
     </div>
   );

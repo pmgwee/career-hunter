@@ -11,18 +11,10 @@ export default function ApplyLoading() {
         <Skeleton className="mt-3 h-4 w-full max-w-xl" />
         <Skeleton className="mt-2 h-4 w-5/6 max-w-xl" />
 
-        <div className="mt-6 rounded-2xl border border-border bg-surface/40 p-6">
-          <Skeleton className="h-5 w-48" />
-          <Skeleton className="mt-2 h-3 w-72 max-w-full" />
-          <div className="mt-6 space-y-4">
-            {Array.from({ length: 5 }).map((_, i) => (
-              <div key={i} className="space-y-2">
-                <Skeleton className="h-3 w-28" />
-                <Skeleton className="h-11 w-full rounded-xl" />
-              </div>
-            ))}
-          </div>
-          <Skeleton className="mt-6 h-10 w-32 rounded-full" />
+        <div className="mt-6 flex max-w-2xl items-center gap-2 rounded-full border border-border bg-surface/70 py-1.5 pl-4 pr-1.5 shadow-sm">
+          <Skeleton className="size-4 shrink-0 rounded-full" />
+          <Skeleton className="h-5 flex-1" />
+          <Skeleton className="h-8 w-28 rounded-full" />
         </div>
       </div>
     </div>
