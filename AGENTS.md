@@ -6,6 +6,16 @@ Built and used by [santifer](https://santifer.io) to evaluate 740+ offers, gener
 
 **It works out of the box, but it's designed to be made yours.** You (AI Agent) can edit the user's files: they say "change the archetypes to data engineering roles" and you do it. That's the whole point.
 
+## Local Repository Layout (MANDATORY)
+
+This workspace uses one local project folder per remote repository:
+
+- `career-ops` is the sole local checkout for `https://github.com/pmgwee/career-hunter`.
+- `career-ops-contrib` is the sole local checkout for `https://github.com/pmgwee/career-ops`.
+- `career-ops-docs` is the sole local checkout for `https://github.com/career-ops-hq/career-ops-docs`.
+
+All branches for a repository stay in that repository's existing folder. Before editing, identify the folder whose `origin` matches the target remote, then use `git switch` or `git switch -c` there. Routine development uses the existing checkout: do not create per-branch sibling folders, managed worktrees, or additional clones. Create an isolated checkout only when the user explicitly requests one. Before any checkout creation, inspect the existing remotes and worktrees so the one-folder-per-remote rule is preserved.
+
 ## Data Contract (CRITICAL)
 
 Two layers — full list in `DATA_CONTRACT.md`:
