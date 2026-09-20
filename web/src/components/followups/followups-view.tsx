@@ -22,7 +22,7 @@ import {
   urgencyTone,
 } from "@/lib/followups";
 import { cn } from "@/lib/cn";
-import { FollowupsPageSkeleton } from "@/components/page-loading-skeletons";
+import { FollowupsTableRowsSkeleton } from "@/components/page-loading-skeletons";
 import { startRouteProgress } from "@/components/route-progress";
 
 // The /followups tracker: WHO needs a nudge today, HOW urgent, WHEN the next
@@ -192,8 +192,6 @@ export function FollowupsView({ initialData }: { initialData: CadenceResponse })
     </>
   );
 
-  if (isPending) return <FollowupsPageSkeleton />;
-
   return (
     <div className="mx-auto max-w-none px-6 py-8">
       <div className="flex items-end justify-between gap-4">
@@ -240,7 +238,7 @@ export function FollowupsView({ initialData }: { initialData: CadenceResponse })
 
       {!data ? null : !data.available ? (
         <EmptyPanel title="Cadence unavailable" body="The cadence engine (followup-cadence.mjs) returned nothing — check that the core scripts are present." />
-      ) : filtered.length === 0 ? (
+      ) : !isPending && filtered.length === 0 ? (
         filtering ? (
           <EmptyPanel title="No matches" body="Try a different urgency filter or clear the search." />
         ) : (
@@ -276,8 +274,8 @@ export function FollowupsView({ initialData }: { initialData: CadenceResponse })
                 <th className="px-2.5 py-2.5 font-medium">Action</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-border">
-              {filtered.map((e) => (
+            <tbody className="divide-y divide-border" aria-busy={isPending}>
+              {isPending ? <FollowupsTableRowsSkeleton /> : filtered.map((e) => (
                 <FollowupRow
                   key={e.num}
                   entry={e}

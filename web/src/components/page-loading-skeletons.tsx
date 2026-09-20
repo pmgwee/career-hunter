@@ -1,5 +1,31 @@
 import { Skeleton } from "@/components/ui/skeleton";
 
+export function PipelineTableRowsSkeleton({ rows = 8 }: { rows?: number }) {
+  return (
+    <>
+      {Array.from({ length: rows }).map((_, i) => (
+        <tr key={i}>
+          <td className="px-4 py-3">
+            <div className="flex items-center gap-2.5">
+              <Skeleton className="size-5 rounded-full" />
+              <Skeleton className="h-4 w-28" />
+            </div>
+          </td>
+          <td className="px-4 py-3"><Skeleton className="h-4 w-40" /></td>
+          <td className="px-4 py-3"><Skeleton className="h-5 w-12 rounded-full" /></td>
+          <td className="whitespace-nowrap px-4 py-3">
+            <div className="flex items-center gap-1.5">
+              <Skeleton className="size-1.5 rounded-full" />
+              <Skeleton className="h-4 w-20" />
+            </div>
+          </td>
+          <td className="whitespace-nowrap px-4 py-3"><Skeleton className="h-4 w-20" /></td>
+        </tr>
+      ))}
+    </>
+  );
+}
+
 export function PipelinePageSkeleton() {
   return (
     <div className="mx-auto max-w-6xl px-4 py-6 sm:px-6 sm:py-8 max-sm:pb-24" aria-label="Loading pipeline">
@@ -29,29 +55,34 @@ export function PipelinePageSkeleton() {
             </tr>
           </thead>
           <tbody className="divide-y divide-border">
-            {Array.from({ length: 8 }).map((_, i) => (
-              <tr key={i}>
-                <td className="px-4 py-3">
-                  <div className="flex items-center gap-2.5">
-                    <Skeleton className="size-5 rounded-full" />
-                    <Skeleton className="h-4 w-28" />
-                  </div>
-                </td>
-                <td className="px-4 py-3"><Skeleton className="h-4 w-40" /></td>
-                <td className="px-4 py-3"><Skeleton className="h-5 w-12 rounded-full" /></td>
-                <td className="whitespace-nowrap px-4 py-3">
-                  <div className="flex items-center gap-1.5">
-                    <Skeleton className="size-1.5 rounded-full" />
-                    <Skeleton className="h-4 w-20" />
-                  </div>
-                </td>
-                <td className="whitespace-nowrap px-4 py-3"><Skeleton className="h-4 w-20" /></td>
-              </tr>
-            ))}
+            <PipelineTableRowsSkeleton />
           </tbody>
         </table>
       </div>
     </div>
+  );
+}
+
+export function FollowupsTableRowsSkeleton({ rows = 6 }: { rows?: number }) {
+  return (
+    <>
+      {Array.from({ length: rows }).map((_, i) => (
+        <tr key={i}>
+          <td className="px-2 py-3"><Skeleton className="size-4 rounded-sm" /></td>
+          <td className="px-2.5 py-3"><div className="flex items-center gap-2.5"><Skeleton className="size-5 rounded-full" /><Skeleton className="h-4 w-24" /></div></td>
+          <td className="px-2.5 py-3"><Skeleton className="h-4 w-32" /></td>
+          <td className="px-2.5 py-3"><Skeleton className="h-5 w-12 rounded-full" /></td>
+          <td className="px-2.5 py-3"><Skeleton className="h-5 w-20 rounded-md" /></td>
+          <td className="px-2.5 py-3"><Skeleton className="h-5 w-16 rounded-full" /></td>
+          <td className="px-2.5 py-3"><Skeleton className="h-4 w-8" /></td>
+          <td className="px-2.5 py-3"><Skeleton className="h-4 w-16" /></td>
+          <td className="px-2.5 py-3"><Skeleton className="h-4 w-8" /></td>
+          <td className="px-2.5 py-3"><Skeleton className="h-4 w-8" /></td>
+          <td className="px-2.5 py-3"><Skeleton className="h-6 w-20 rounded-md" /></td>
+          <td className="px-2.5 py-3"><Skeleton className="h-4 w-8" /></td>
+        </tr>
+      ))}
+    </>
   );
 }
 
@@ -83,22 +114,7 @@ export function FollowupsPageSkeleton() {
             </tr>
           </thead>
           <tbody className="divide-y divide-border">
-            {Array.from({ length: 6 }).map((_, i) => (
-              <tr key={i}>
-                <td className="px-2 py-3"><Skeleton className="size-4 rounded-sm" /></td>
-                <td className="px-2.5 py-3"><div className="flex items-center gap-2.5"><Skeleton className="size-5 rounded-full" /><Skeleton className="h-4 w-24" /></div></td>
-                <td className="px-2.5 py-3"><Skeleton className="h-4 w-32" /></td>
-                <td className="px-2.5 py-3"><Skeleton className="h-5 w-12 rounded-full" /></td>
-                <td className="px-2.5 py-3"><Skeleton className="h-5 w-20 rounded-md" /></td>
-                <td className="px-2.5 py-3"><Skeleton className="h-5 w-16 rounded-full" /></td>
-                <td className="px-2.5 py-3"><Skeleton className="h-4 w-8" /></td>
-                <td className="px-2.5 py-3"><Skeleton className="h-4 w-16" /></td>
-                <td className="px-2.5 py-3"><Skeleton className="h-4 w-8" /></td>
-                <td className="px-2.5 py-3"><Skeleton className="h-4 w-8" /></td>
-                <td className="px-2.5 py-3"><Skeleton className="h-6 w-20 rounded-md" /></td>
-                <td className="px-2.5 py-3"><Skeleton className="h-4 w-8" /></td>
-              </tr>
-            ))}
+            <FollowupsTableRowsSkeleton />
           </tbody>
         </table>
       </div>
@@ -123,9 +139,13 @@ export function AnalyticsPageSkeleton({ tab = "progress" }: { tab?: "progress" |
         <Skeleton className="h-11 w-32 rounded-t-lg" />
       </div>
 
-      {tab === "progress" ? <AnalyticsProgressSkeleton /> : <AnalyticsStatsSkeleton />}
+      <AnalyticsContentSkeleton tab={tab} />
     </div>
   );
+}
+
+export function AnalyticsContentSkeleton({ tab = "progress" }: { tab?: "progress" | "search-stats" }) {
+  return tab === "progress" ? <AnalyticsProgressSkeleton /> : <AnalyticsStatsSkeleton />;
 }
 
 function AnalyticsProgressSkeleton() {
