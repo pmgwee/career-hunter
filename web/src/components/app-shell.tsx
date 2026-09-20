@@ -1,7 +1,8 @@
 "use client";
 
-import Link from "next/link";
+import Link, { useLinkStatus } from "next/link";
 import { usePathname } from "next/navigation";
+import { Loader2 } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { CoMark } from "@/components/co-mark";
 import { AssistantConsole } from "@/components/assistant-console";
@@ -17,6 +18,7 @@ import { WorkerPills } from "@/components/jobs/worker-pills";
 import { UsageMeter } from "@/components/usage-meter";
 import { instrumentSerif } from "@/lib/fonts";
 import { NAV_ITEMS, isActivePath } from "@/lib/nav-items";
+import { RouteProgress, startRouteProgress } from "@/components/route-progress";
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -25,10 +27,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <PipelineProvider>
       <ApplyProvider>
       <ExploreProvider>
+      <RouteProgress />
       <MobileNav />
       <div className="flex min-h-screen">
         <aside className="sticky top-0 hidden h-screen w-60 shrink-0 flex-col overflow-y-auto border-r border-border bg-surface/30 p-4 md:flex">
-          <Link href="/" className="mb-8 flex items-center gap-2.5 px-1">
+          <Link href="/" prefetch={false} onClick={() => startRouteProgress()} className="mb-8 flex items-center gap-2.5 px-1">
             <CoMark size={32} />
             <span className={`${instrumentSerif.className} relative -top-px text-2xl font-normal tracking-tight text-landing`}>
               career-ops
@@ -41,6 +44,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 <Link
                   key={href}
                   href={href}
+                  prefetch={false}
+                  onClick={() => startRouteProgress()}
                   className={cn(
                     "flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors",
                     active
@@ -48,7 +53,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                       : "text-muted hover:bg-surface-hover hover:text-foreground",
                   )}
                 >
-                  <Icon className="size-4" />
+                  <DesktopNavIcon icon={Icon} active={active} />
                   {label}
                   {chip && (
                     <span className="ml-auto rounded-full border border-brand/30 bg-brand-soft px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-brand-text">
@@ -86,4 +91,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       </PipelineProvider>
     </JobsProvider>
   );
+}
+
+function DesktopNavIcon({ icon: Icon, active }: { icon: (typeof NAV_ITEMS)[number]["icon"]; active: boolean }) {
+  const { pending } = useLinkStatus();
+  if (pending) return <Loader2 className="size-4 animate-spin text-brand" />;
+  return <Icon className={cn("size-4", active && "text-brand-text")} />;
 }
