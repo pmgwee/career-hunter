@@ -48,6 +48,7 @@ export function AnalyticsView({
   tab: "progress" | "search-stats";
 }) {
   const [pendingTab, setPendingTab] = useState<"progress" | "search-stats" | null>(null);
+  const visibleTab = pendingTab ?? tab;
   const loadingTab = pendingTab !== null && pendingTab !== tab ? pendingTab : null;
 
   useEffect(() => {
@@ -73,7 +74,7 @@ export function AnalyticsView({
       <nav aria-label="Analytics views" className="mt-5 -mb-px flex gap-1 overflow-x-auto border-b border-border">
         <AnalyticsTab
           href="/analytics?tab=progress"
-          active={tab === "progress"}
+          active={visibleTab === "progress"}
           icon={<BarChart3 className="size-3.5" />}
           onNavigate={() => {
             startRouteProgress();
@@ -84,7 +85,7 @@ export function AnalyticsView({
         </AnalyticsTab>
         <AnalyticsTab
           href="/analytics?tab=search-stats"
-          active={tab === "search-stats"}
+          active={visibleTab === "search-stats"}
           icon={<Target className="size-3.5" />}
           onNavigate={() => {
             startRouteProgress();
