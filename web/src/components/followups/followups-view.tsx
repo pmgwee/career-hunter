@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { CalendarClock, ChevronDown, ChevronRight, Loader2, Pin, Search, Trash2 } from "lucide-react";
@@ -22,6 +22,8 @@ import {
   urgencyTone,
 } from "@/lib/followups";
 import { cn } from "@/lib/cn";
+import { FollowupsPageSkeleton } from "@/components/page-loading-skeletons";
+import { startRouteProgress } from "@/components/route-progress";
 
 // The /followups tracker: WHO needs a nudge today, HOW urgent, WHEN the next
 // touch is due, and the permanent history of every follow-up sent. The verdict
@@ -77,6 +79,7 @@ export function FollowupsView({ initialData }: { initialData: CadenceResponse })
   const params = useSearchParams();
   const router = useRouter();
   const pathname = usePathname();
+  const [isPending, startTransition] = useTransition();
 
   const [data, setData] = useState<CadenceResponse>(initialData);
   const [expanded, setExpanded] = useState<Set<number>>(new Set());
@@ -117,9 +120,13 @@ export function FollowupsView({ initialData }: { initialData: CadenceResponse })
         else sp.set(k, String(v));
       }
       const qs = sp.toString();
-      router.replace(`${pathname}${qs ? `?${qs}` : ""}`, { scroll: false });
+      if (qs === params.toString()) return;
+      startRouteProgress();
+      startTransition(() => {
+        router.replace(`${pathname}${qs ? `?${qs}` : ""}`, { scroll: false });
+      });
     },
-    [params, router, pathname],
+    [params, router, pathname, startTransition],
   );
 
   const entries = useMemo(() => (data?.available ? data.entries : []), [data]);
@@ -184,6 +191,8 @@ export function FollowupsView({ initialData }: { initialData: CadenceResponse })
       <span className="tabular-nums">{meta.overdue}</span> overdue
     </>
   );
+
+  if (isPending) return <FollowupsPageSkeleton />;
 
   return (
     <div className="mx-auto max-w-none px-6 py-8">

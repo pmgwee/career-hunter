@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Search, ChevronsUpDown, X, Compass, ArrowRight } from "lucide-react";
@@ -11,6 +11,8 @@ import { canonStatus, scoreNum, scoreTone, statusDot } from "@/lib/format";
 import { InboxTriage } from "@/components/inbox/inbox-triage";
 import { cn } from "@/lib/cn";
 import { PageFrame } from "@/components/page-frame";
+import { PipelinePageSkeleton } from "@/components/page-loading-skeletons";
+import { startRouteProgress } from "@/components/route-progress";
 
 // INBOX (the triage queue) is the default tab; the rest filter the tracker.
 const TABS = [
@@ -42,6 +44,7 @@ export function PipelineView({
   const params = useSearchParams();
   const router = useRouter();
   const pathname = usePathname();
+  const [isPending, startTransition] = useTransition();
 
   // The URL is the SINGLE source of truth for tab/min/sort/dir, so the home stat
   // tiles' deep links AND the assistant's filterPipeline/navigate actions drive
@@ -74,9 +77,13 @@ export function PipelineView({
         else sp.set(k, String(v));
       }
       const qs = sp.toString();
-      router.replace(`${pathname}${qs ? `?${qs}` : ""}`, { scroll: false });
+      if (qs === params.toString()) return;
+      startRouteProgress();
+      startTransition(() => {
+        router.replace(`${pathname}${qs ? `?${qs}` : ""}`, { scroll: false });
+      });
     },
-    [params, router, pathname],
+    [params, router, pathname, startTransition],
   );
 
   // Pending + deduped by URL (pipeline.md can list the same posting twice) so the
@@ -117,6 +124,8 @@ export function PipelineView({
       return (a[sort.key] || "").localeCompare(b[sort.key] || "") * sort.dir;
     });
   }, [applications, tab, q, sort, minFilter]);
+
+  if (isPending) return <PipelinePageSkeleton />;
 
   return (
     <PageFrame>

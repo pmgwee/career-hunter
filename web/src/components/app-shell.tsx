@@ -1,6 +1,7 @@
 "use client";
 
 import Link, { useLinkStatus } from "next/link";
+import { Suspense } from "react";
 import { usePathname } from "next/navigation";
 import { Loader2 } from "lucide-react";
 import { cn } from "@/lib/cn";
@@ -29,7 +30,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <ApplyProvider>
       <ExploreProvider>
       <UsageProvider>
-      <RouteProgress />
+      <Suspense fallback={null}>
+        <RouteProgress />
+      </Suspense>
       <MobileNav />
       <div className="flex min-h-screen">
         <aside className="sticky top-0 hidden h-screen w-60 shrink-0 flex-col overflow-y-auto border-r border-border bg-surface/30 p-4 md:flex">
