@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 
 type ProgressState = "idle" | "loading" | "done";
 
@@ -17,15 +17,17 @@ export function startRouteProgress() {
 /**
  * App Router does not expose the old router event API. This small client
  * indicator listens for internal link clicks and completes when the committed
- * pathname changes, while route-level `loading.tsx` supplies the detailed
- * skeleton underneath it.
+ * pathname or query string changes, while route-level `loading.tsx` supplies
+ * the detailed skeleton underneath it.
  */
 export function RouteProgress() {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const locationKey = `${pathname}?${searchParams.toString()}`;
   const [state, setState] = useState<ProgressState>("idle");
   const doneTimer = useRef<number | undefined>(undefined);
   const safetyTimer = useRef<number | undefined>(undefined);
-  const activePath = useRef(pathname);
+  const activeLocation = useRef(locationKey);
 
   useEffect(() => {
     const onStart = () => {
@@ -65,13 +67,13 @@ export function RouteProgress() {
   }, []);
 
   useEffect(() => {
-    if (pathname === activePath.current) return;
-    activePath.current = pathname;
+    if (locationKey === activeLocation.current) return;
+    activeLocation.current = locationKey;
     window.clearTimeout(safetyTimer.current);
     setState((current) => (current === "loading" ? "done" : current));
     doneTimer.current = window.setTimeout(() => setState("idle"), 500);
     return () => window.clearTimeout(doneTimer.current);
-  }, [pathname]);
+  }, [locationKey]);
 
   return (
     <div aria-hidden="true" className="pointer-events-none fixed inset-x-0 top-0 z-[100] h-0.5">

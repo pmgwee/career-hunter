@@ -1,7 +1,12 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { ArrowUpRight, BarChart3, BriefcaseBusiness, CircleDollarSign, MapPin, Sparkles, Target } from "lucide-react";
 import type { AnalyticsApplication } from "@/lib/analytics-data";
 import { PageFrame } from "@/components/page-frame";
+import { AnalyticsPageSkeleton } from "@/components/page-loading-skeletons";
+import { startRouteProgress } from "@/components/route-progress";
 
 type ProgressMetrics = {
   evaluated: number;
@@ -42,6 +47,15 @@ export function AnalyticsView({
   insights: string[];
   tab: "progress" | "search-stats";
 }) {
+  const [pendingTab, setPendingTab] = useState<"progress" | "search-stats" | null>(null);
+  const loadingTab = pendingTab !== null && pendingTab !== tab ? pendingTab : null;
+
+  useEffect(() => {
+    if (pendingTab === tab) setPendingTab(null);
+  }, [pendingTab, tab]);
+
+  if (loadingTab) return <AnalyticsPageSkeleton tab={loadingTab} />;
+
   return (
     <PageFrame>
       <header className="flex flex-col gap-5 border-b border-border pb-5 sm:flex-row sm:items-end sm:justify-between">
@@ -59,10 +73,26 @@ export function AnalyticsView({
       </header>
 
       <nav aria-label="Analytics views" className="mt-5 -mb-px flex gap-1 overflow-x-auto border-b border-border">
-        <AnalyticsTab href="/analytics?tab=progress" active={tab === "progress"} icon={<BarChart3 className="size-3.5" />}>
+        <AnalyticsTab
+          href="/analytics?tab=progress"
+          active={tab === "progress"}
+          icon={<BarChart3 className="size-3.5" />}
+          onNavigate={() => {
+            startRouteProgress();
+            setPendingTab("progress");
+          }}
+        >
           Search progress
         </AnalyticsTab>
-        <AnalyticsTab href="/analytics?tab=search-stats" active={tab === "search-stats"} icon={<Target className="size-3.5" />}>
+        <AnalyticsTab
+          href="/analytics?tab=search-stats"
+          active={tab === "search-stats"}
+          icon={<Target className="size-3.5" />}
+          onNavigate={() => {
+            startRouteProgress();
+            setPendingTab("search-stats");
+          }}
+        >
           Search stats
         </AnalyticsTab>
       </nav>
@@ -72,10 +102,18 @@ export function AnalyticsView({
   );
 }
 
-function AnalyticsTab({ href, active, icon, children }: { href: string; active: boolean; icon: React.ReactNode; children: React.ReactNode }) {
+function AnalyticsTab({ href, active, icon, onNavigate, children }: { href: string; active: boolean; icon: React.ReactNode; onNavigate: () => void; children: React.ReactNode }) {
   return (
     <Link
       href={href}
+      onClick={(event) => {
+        if (active) {
+          event.preventDefault();
+          return;
+        }
+        if (event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+        onNavigate();
+      }}
       aria-current={active ? "page" : undefined}
       className={`-mb-px inline-flex min-h-11 shrink-0 items-center gap-2 border-b-2 px-3 text-xs font-semibold transition-colors ${
         active ? "border-brand text-foreground" : "border-transparent text-muted hover:border-border hover:text-foreground"
