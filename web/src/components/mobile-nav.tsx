@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import Link from "next/link";
+import Link, { useLinkStatus } from "next/link";
 import { usePathname } from "next/navigation";
-import { Menu, X } from "lucide-react";
+import { Loader2, Menu, X } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { CoMark } from "@/components/co-mark";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -12,6 +12,7 @@ import { UsageMeter } from "@/components/usage-meter";
 import { instrumentSerif } from "@/lib/fonts";
 import { NAV_ITEMS, isActivePath } from "@/lib/nav-items";
 import { useJobs } from "@/components/jobs/job-store";
+import { startRouteProgress } from "@/components/route-progress";
 
 // Mobile navigation (< md): a glass top bar + a right-side slide-over drawer that
 // mirrors the desktop sidebar (nav + workers + usage + theme). Premium details:
@@ -157,14 +158,17 @@ export function MobileNav() {
                 key={href}
                 href={href}
                 prefetch={false}
-                onClick={() => setOpen(false)}
+                onClick={() => {
+                  startRouteProgress();
+                  setOpen(false);
+                }}
                 aria-current={active ? "page" : undefined}
                 className={cn(
                   "flex items-center gap-3 rounded-lg px-3 py-3 text-[15px] transition-colors",
                   active ? "bg-brand-soft text-brand-text" : "text-muted hover:bg-surface-hover hover:text-foreground",
                 )}
               >
-                <Icon className="size-5" />
+                <MobileNavIcon icon={Icon} active={active} />
                 {label}
                 {chip && (
                   <span className="ml-auto rounded-full border border-brand/30 bg-brand-soft px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-brand-text">
@@ -193,4 +197,10 @@ export function MobileNav() {
       </aside>
     </>
   );
+}
+
+function MobileNavIcon({ icon: Icon, active }: { icon: (typeof NAV_ITEMS)[number]["icon"]; active: boolean }) {
+  const { pending } = useLinkStatus();
+  if (pending) return <Loader2 className="size-5 animate-spin text-brand" />;
+  return <Icon className={cn("size-5", active && "text-brand-text")} />;
 }
