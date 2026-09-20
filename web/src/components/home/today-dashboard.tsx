@@ -12,6 +12,7 @@ import { DiscoveryCard } from "@/components/explore/discovery-card";
 import { FollowUpCard, type FollowUp } from "@/components/home/follow-up-card";
 import { DecisionCard } from "@/components/home/decision-card";
 import { QuickEvaluate } from "@/components/quick-evaluate";
+import { FollowupsDueSectionSkeleton } from "@/components/page-loading-skeletons";
 
 // The retention "Today": a dual-loop action queue (the maintainer's
 // "N new matches this week · M follow-ups due"). SUPPLY loop = fresh free-scan
@@ -29,22 +30,28 @@ export function TodayDashboard({
 }) {
   const [followups, setFollowups] = useState<FollowUp[]>([]);
   const [overdue, setOverdue] = useState(0);
+  const [followupsLoading, setFollowupsLoading] = useState(true);
   const [fresh, setFresh] = useState<DiscoveredOffer[]>([]);
+  const [freshLoading, setFreshLoading] = useState(true);
   const router = useRouter();
   const dateLabel = useMemo(() => new Date().toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" }), []);
 
   const refetch = useCallback(() => {
+    setFollowupsLoading(true);
     fetch("/api/followups")
       .then((r) => r.json())
       .then((d) => {
         setFollowups(Array.isArray(d.entries) ? d.entries : []);
         setOverdue(d.metadata?.overdue ?? d.entries?.length ?? 0);
       })
-      .catch(() => {});
+      .catch(() => {})
+      .finally(() => setFollowupsLoading(false));
+    setFreshLoading(true);
     fetch("/api/whats-new")
       .then((r) => r.json())
       .then((d) => setFresh(Array.isArray(d.offers) ? d.offers : []))
-      .catch(() => {});
+      .catch(() => {})
+      .finally(() => setFreshLoading(false));
   }, []);
 
   useEffect(() => {
@@ -67,7 +74,8 @@ export function TodayDashboard({
   );
 
   const newThisWeek = fresh.length;
-  const allClear = newThisWeek === 0 && overdue === 0 && awaiting.length === 0;
+  const dataLoading = followupsLoading || freshLoading;
+  const allClear = !dataLoading && newThisWeek === 0 && overdue === 0 && awaiting.length === 0;
   const inboxUrls = useMemo(() => new Set(inbox.map((j) => j.url)), [inbox]);
 
   return (
@@ -81,7 +89,9 @@ export function TodayDashboard({
             <span className="text-faint">//</span> today · <span className="tabular-nums">{dateLabel}</span>
           </p>
           <h1 className={`${instrumentSerif.className} mt-3 text-4xl leading-[1.05] text-landing md:text-5xl`}>
-            {allClear ? (
+            {dataLoading ? (
+              <>Your career queue is loading.</>
+            ) : allClear ? (
               <>You&apos;re all caught up.</>
             ) : (
               <>
@@ -115,7 +125,9 @@ export function TodayDashboard({
       </section>
 
       {/* A. Follow-ups due (demand loop) */}
-      {followups.length > 0 && (
+      {followupsLoading ? (
+        <FollowupsDueSectionSkeleton />
+      ) : followups.length > 0 && (
         <Section icon={Bell} title="Follow-ups due" hint="Keep your applications alive — a nudge beats silence">
           <div className="grid gap-2.5">
             {followups.map((f) => (

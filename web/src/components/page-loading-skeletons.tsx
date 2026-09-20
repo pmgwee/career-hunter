@@ -1,5 +1,35 @@
 import { Skeleton } from "@/components/ui/skeleton";
 
+export function FollowupsDueSectionSkeleton({ rows = 3 }: { rows?: number }) {
+  return (
+    <section className="mt-10" aria-label="Loading follow-ups due">
+      <div className="mb-3 flex items-center gap-2">
+        <Skeleton className="size-4 rounded" />
+        <Skeleton className="h-3 w-28" />
+        <Skeleton className="h-3 w-64 max-w-[50vw]" />
+      </div>
+      <div className="grid gap-2.5">
+        {Array.from({ length: rows }).map((_, i) => (
+          <div key={i} className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-2 rounded-xl border border-border bg-surface/40 px-3.5 py-3">
+            <div className="flex min-w-0 flex-[1_1_55%] items-center gap-3">
+              <Skeleton className="size-[22px] shrink-0 rounded-full" />
+              <div className="min-w-0 flex-1 space-y-2">
+                <Skeleton className="h-4 w-48 max-w-full" />
+                <Skeleton className="h-3 w-28" />
+              </div>
+            </div>
+            <div className="ml-auto flex shrink-0 items-center gap-2">
+              <Skeleton className="h-7 w-28 rounded-md" />
+              <Skeleton className="size-6 rounded" />
+              <Skeleton className="h-4 w-12" />
+            </div>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
 export function PipelineTableRowsSkeleton({ rows = 8 }: { rows?: number }) {
   return (
     <>
