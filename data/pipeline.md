@@ -13,3 +13,5 @@ Paste job URLs below as `- [ ] {url}` then run `/career-ops pipeline`.
 - [ ] https://careers.micron.com/careers/job/43657891  <!-- DATA SCIENTIST (JR107801) — Data Scientist 1, no quantified years bar, only yield req that names LLM. local:jds/micron-data-scientist-JR107801.md -->
 
 ## Processed
+
+- [x] #31 | https://career.sea.com/position/J02160976 | Sea | AI Engineer | N/A | PDF ❌ | Submitted (confirmed 2026-09-21); previously prepared as AI Engineer (Spark) on 2026-09-16; no saved A-F report or score. LinkedIn mirror: https://sg.linkedin.com/jobs/view/ai-engineer-at-sea-4463743157
