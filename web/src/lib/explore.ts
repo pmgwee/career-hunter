@@ -89,6 +89,7 @@ export type ScanEvent =
       capHit?: boolean;
       datasetStatus?: Record<string, "ok" | "stale" | "empty">;
       postingsDroppedNoDate?: number;
+      partial?: boolean;
     }
   | { kind: "log"; line: string }
   | { kind: "error"; message: string }

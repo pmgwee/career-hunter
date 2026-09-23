@@ -42,7 +42,7 @@ export function ExplorerView({
   const { filters, setFilters, initFilters, phase, running, offers, discover, loadFresh, status, error, scannerMissing, mode, setMode, aiIntent, setAiIntent, discoverAI, companiesScanned, companiesAvailable, capHit, droppedNoDate, partial } = useExplore();
   const scanNote =
     companiesScanned > 0
-      ? `Scanned ${companiesScanned.toLocaleString()}${companiesAvailable > companiesScanned ? ` of ${companiesAvailable.toLocaleString()}` : ""} compan${companiesScanned === 1 ? "y" : "ies"}${partial ? " · some sources were unreachable" : ""}.`
+        ? `Scanned ${companiesScanned.toLocaleString()}${companiesAvailable > companiesScanned ? ` of ${companiesAvailable.toLocaleString()}` : ""} compan${companiesScanned === 1 ? "y" : "ies"}${partial ? " · partial scan" : ""}.`
       : undefined;
   const inited = useRef(false);
   const [refineOpen, setRefineOpen] = useState(false);
@@ -313,7 +313,7 @@ function DegradedCard({
     body = `${droppedNoDate.toLocaleString()} posting${droppedNoDate === 1 ? "" : "s"} matched but had no clear publish date, so the freshness filter dropped them. Widening the time window often brings dated equivalents back.`;
   } else if (companiesScanned > 0 && partial) {
     title = "Some job boards were unreachable.";
-    body = `The scan searched ${companiesScanned.toLocaleString()} companies, but one or more sources didn’t respond — so this is a partial result, not “all caught up”. A retry usually clears it.`;
+    body = `The scan searched ${companiesScanned.toLocaleString()} companies, but one or more sources didn’t finish or respond — so this is a partial result, not “all caught up”. Try a smaller scan depth or retry later.`;
   }
   return (
     <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-5 text-center">

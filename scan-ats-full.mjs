@@ -892,7 +892,13 @@ async function main() {
       const dedupToken = dedupTokenFor(job, provider);
       if (seenUrls.has(dedupToken)) continue;
       seenUrls.add(dedupToken); // intra-scan dedup
-      newOffers.push({ ...job, source: `${sourceName}-full`, dateStatus: job.postedAt ? 'dated' : 'unknown' });
+      const offer = { ...job, source: `${sourceName}-full`, dateStatus: job.postedAt ? 'dated' : 'unknown' };
+      newOffers.push(offer);
+      // A web scan can reach its time budget before the final JSON is ready.
+      // Stream matches only when explicitly requested by the web launcher.
+      if (opts.json && process.env.CAREER_OPS_STREAM_OFFERS === '1') {
+        process.stderr.write(`@@CAREER_OPS_OFFER@@${JSON.stringify(offer)}\n`);
+      }
     }
   };
 
