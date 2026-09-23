@@ -895,7 +895,13 @@ async function main() {
       const dedupToken = dedupTokenFor(job, provider);
       if (seenUrls.has(dedupToken)) continue;
       seenUrls.add(dedupToken); // intra-scan dedup
-      newOffers.push({ ...job, source: `${sourceName}-full`, dateStatus: job.postedAt ? 'dated' : 'unknown' });
+      const offer = { ...job, source: `${sourceName}-full`, dateStatus: job.postedAt ? 'dated' : 'unknown' };
+      newOffers.push(offer);
+      // The web's long-running serverless scan needs usable results even when
+      // its time budget ends before the final --json payload is written.
+      if (opts.json && process.env.CAREER_OPS_STREAM_OFFERS === '1') {
+        process.stderr.write(`@@CAREER_OPS_OFFER@@${JSON.stringify(offer)}\n`);
+      }
     }
   };
 

@@ -251,7 +251,10 @@ export function ExploreProvider({ children }: { children: React.ReactNode }) {
                   droppedNoDateAcc = ev.postingsDroppedNoDate;
                   setDroppedNoDate(ev.postingsDroppedNoDate);
                 }
-                if (ev.unreachable > 0 || datasetIssue) setPartial(true);
+                if (ev.unreachable > 0 || datasetIssue || ev.partial) {
+                  datasetIssueAcc = true;
+                  setPartial(true);
+                }
                 break;
               }
               case "error":

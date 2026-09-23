@@ -35,6 +35,7 @@ const ATS_DONE_RE = /done \((\d+) unreachable boards skipped\)/;
 const COMPANIES_RE = /Companies scanned:\s+(\d+)/;
 const UNREACHABLE_RE = /Unreachable boards:\s+(\d+)/;
 const SUMMARY_RE = /New matches:\s+(\d+)/;
+const STREAM_OFFER_PREFIX = "@@CAREER_OPS_OFFER@@";
 
 function firstMatch(title: string, positives: string[]): string | undefined {
   const lower = title.toLowerCase();
@@ -121,6 +122,7 @@ export function runDiscovery(filters: ExploreFilters, onEvent: (e: ScanEvent) =>
       env: {
         ...process.env,
         CAREER_OPS_PORTALS: tempPortals,
+        CAREER_OPS_STREAM_OFFERS: "1",
         ...(scanCacheDir ? { CAREER_OPS_SCAN_CACHE_DIR: scanCacheDir } : {}),
       },
     });
@@ -135,8 +137,13 @@ export function runDiscovery(filters: ExploreFilters, onEvent: (e: ScanEvent) =>
     let errBuf = "";
     let jsonOut = ""; // --json mode: the single stdout object accumulates here
     let failureDetail = "";
+    let timedOut = false;
+    let completedCompanies = 0;
+    let currentSourceCompanies = 0;
+    let currentSourceScanned = 0;
 
     const killer = setTimeout(() => {
+      timedOut = true;
       try {
         child.kill("SIGTERM");
       } catch {
@@ -150,16 +157,22 @@ export function runDiscovery(filters: ExploreFilters, onEvent: (e: ScanEvent) =>
       const atsM = line.match(ATS_START_RE);
       if (atsM) {
         currentAts = atsM[1];
+        currentSourceCompanies = Number(atsM[2]);
+        currentSourceScanned = 0;
         onEvent({ kind: "atsStart", ats: atsM[1], companies: Number(atsM[2]) });
         return;
       }
       const progM = line.match(PROGRESS_RE);
       if (progM) {
+        currentSourceScanned = Number(progM[1]);
         onEvent({ kind: "progress", ats: currentAts, scanned: Number(progM[1]), total: Number(progM[2]), matches: Number(progM[3]) });
         return;
       }
       const doneAtsM = line.match(ATS_DONE_RE);
       if (doneAtsM) {
+        completedCompanies += currentSourceCompanies;
+        currentSourceCompanies = 0;
+        currentSourceScanned = 0;
         onEvent({ kind: "atsDone", ats: currentAts, unreachable: Number(doneAtsM[1]) });
       }
     };
@@ -229,10 +242,31 @@ export function runDiscovery(filters: ExploreFilters, onEvent: (e: ScanEvent) =>
     });
     child.stderr.on("data", (d: Buffer) => {
       errBuf += d.toString();
-      const parts = errBuf.split(/\r?\n/);
+      const parts = errBuf.split(/\r\n|\r|\n/);
       errBuf = parts.pop() ?? "";
       for (const p of parts) {
         if (!p.trim()) continue;
+        if (p.startsWith(STREAM_OFFER_PREFIX)) {
+          try {
+            const o = JSON.parse(p.slice(STREAM_OFFER_PREFIX.length)) as JsonOffer;
+            const url = (o.url || "").trim();
+            if (url && o.company && o.title && !seen.has(url)) {
+              seen.add(url);
+              const source = o.source || `${currentAts}-full`;
+              const offer: DiscoveredOffer = {
+                company: o.company, title: o.title, url,
+                location: o.location || "", postedAt: o.postedAt || "",
+                ats: source.replace(/-full$/, ""), source,
+                matchedKeyword: firstMatch(o.title, filters.positive),
+              };
+              offers.push(offer);
+              onEvent({ kind: "offer", offer });
+            }
+          } catch {
+            /* malformed progress event must not break the scan */
+          }
+          continue;
+        }
         if (/^(?:Fatal:|Error(?:\s+\[[^\]]+\])?:)/.test(p.trim())) failureDetail = p.trim().slice(0, 300);
         if (useJson) handleProgressLine(p); // human progress lives on stderr in --json mode
         onEvent({ kind: "log", line: p.trim() });
@@ -283,6 +317,14 @@ export function runDiscovery(filters: ExploreFilters, onEvent: (e: ScanEvent) =>
             capHit: j.capHit,
             datasetStatus: j.datasetStatus,
             postingsDroppedNoDate: j.postingsDroppedNoDate,
+          });
+        } else if (timedOut || offers.length > 0) {
+          onEvent({
+            kind: "summary",
+            companiesScanned: completedCompanies + currentSourceScanned,
+            unreachable: 0,
+            matches: offers.length,
+            partial: true,
           });
         } else {
           // A scanner that exits before writing JSON usually explains why on
