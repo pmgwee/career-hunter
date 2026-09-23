@@ -111,6 +111,7 @@ export function runDiscovery(filters: ExploreFilters, onEvent: (e: ScanEvent) =>
     let outBuf = "";
     let errBuf = "";
     let jsonOut = ""; // --json mode: the single stdout object accumulates here
+    let failureDetail = "";
 
     const killer = setTimeout(() => {
       try {
@@ -209,6 +210,7 @@ export function runDiscovery(filters: ExploreFilters, onEvent: (e: ScanEvent) =>
       errBuf = parts.pop() ?? "";
       for (const p of parts) {
         if (!p.trim()) continue;
+        if (/^(?:Fatal:|Error(?:\s+\[[^\]]+\])?:)/.test(p.trim())) failureDetail = p.trim().slice(0, 300);
         if (useJson) handleProgressLine(p); // human progress lives on stderr in --json mode
         onEvent({ kind: "log", line: p.trim() });
       }
@@ -220,7 +222,7 @@ export function runDiscovery(filters: ExploreFilters, onEvent: (e: ScanEvent) =>
       onEvent({ kind: "error", message: e instanceof Error ? e.message : "scanner failed to start" });
       resolve(offers);
     });
-    child.on("close", () => {
+    child.on("close", (code) => {
       clearTimeout(killer);
       cleanupTempPortals(tempPortals);
       if (useJson) {
@@ -260,9 +262,10 @@ export function runDiscovery(filters: ExploreFilters, onEvent: (e: ScanEvent) =>
             postingsDroppedNoDate: j.postingsDroppedNoDate,
           });
         } else {
-          // --json requested but stdout didn't parse — surface honestly rather than
-          // silently returning 0 (defensive; shouldn't happen once the probe passed).
-          onEvent({ kind: "error", message: "The scanner returned no readable output." });
+          // A scanner that exits before writing JSON usually explains why on
+          // stderr. Keep that reason visible instead of masking every failure.
+          const reason = failureDetail || (code !== 0 ? `Scanner exited with code ${code}.` : "The scanner returned no readable output.");
+          onEvent({ kind: "error", message: reason });
         }
         resolve(offers);
         return;
