@@ -1,5 +1,6 @@
 import { spawn } from "node:child_process";
 import fs from "node:fs";
+import os from "node:os";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
 import { careerOpsRoot, rootScript } from "@/lib/career-ops";
@@ -85,6 +86,19 @@ type ScanJson = {
 export function runDiscovery(filters: ExploreFilters, onEvent: (e: ScanEvent) => void): Promise<DiscoveredOffer[]> {
   return new Promise((resolve) => {
     const tempPortals = writeTempPortals(filters);
+    const scanCacheDir = process.env.VERCEL
+      ? fs.mkdtempSync(path.join(os.tmpdir(), "career-ops-scan-"))
+      : undefined;
+    const cleanup = () => {
+      cleanupTempPortals(tempPortals);
+      if (scanCacheDir && path.resolve(path.dirname(scanCacheDir)) === path.resolve(os.tmpdir())) {
+        try {
+          fs.rmSync(scanCacheDir, { recursive: true, force: true });
+        } catch {
+          /* best-effort temporary cache cleanup */
+        }
+      }
+    };
     const ats = (filters.ats.length ? filters.ats : [...ATS_SOURCES]).filter((a) => (ATS_SOURCES as readonly string[]).includes(a));
     const useJson = scannerSupportsJson();
     const args = [
@@ -104,7 +118,11 @@ export function runDiscovery(filters: ExploreFilters, onEvent: (e: ScanEvent) =>
 
     const child = spawn(process.execPath, args, {
       cwd: careerOpsRoot(),
-      env: { ...process.env, CAREER_OPS_PORTALS: tempPortals },
+      env: {
+        ...process.env,
+        CAREER_OPS_PORTALS: tempPortals,
+        ...(scanCacheDir ? { CAREER_OPS_SCAN_CACHE_DIR: scanCacheDir } : {}),
+      },
     });
 
     const offers: DiscoveredOffer[] = [];
@@ -223,13 +241,13 @@ export function runDiscovery(filters: ExploreFilters, onEvent: (e: ScanEvent) =>
 
     child.on("error", (e) => {
       clearTimeout(killer);
-      cleanupTempPortals(tempPortals);
+      cleanup();
       onEvent({ kind: "error", message: e instanceof Error ? e.message : "scanner failed to start" });
       resolve(offers);
     });
     child.on("close", (code) => {
       clearTimeout(killer);
-      cleanupTempPortals(tempPortals);
+      cleanup();
       if (useJson) {
         let j: ScanJson | null = null;
         try {

@@ -73,7 +73,10 @@ import { getCareerOpsRoot } from './path-resolver.mjs';
 // Its portals fallback had the same split: it honored CAREER_OPS_PORTALS but
 // otherwise looked in the cwd instead of the data root.
 const DATA_ROOT = getCareerOpsRoot();
-const CACHE_DIR = path.join(DATA_ROOT, 'data/cache/ats-companies');
+// Web serverless functions have a read-only data root. The web launcher gives
+// each dry-run scan a private writable cache under the platform's temp dir.
+const CACHE_ROOT = process.env.CAREER_OPS_SCAN_CACHE_DIR?.trim() || path.join(DATA_ROOT, 'data/cache');
+const CACHE_DIR = path.join(CACHE_ROOT, 'ats-companies');
 const CACHE_TTL_HOURS = 24;
 // Tracks `main` deliberately: the dataset's value is freshness (new boards
 // appear weekly), so pinning a commit would defeat the purpose. Integrity rests
@@ -109,7 +112,7 @@ const RESOLVER_FAILURE_LIMIT = 50;
 // Anchored too (#3510): a sweep resumed from a different directory found no
 // checkpoint and silently restarted a multi-hour run from zero — the one failure
 // mode --resume exists to prevent.
-const CHECKPOINT_PATH = path.join(DATA_ROOT, 'data/cache/ats-full-checkpoint.json');
+const CHECKPOINT_PATH = path.join(CACHE_ROOT, 'ats-full-checkpoint.json');
 const CHECKPOINT_EVERY = 500;
 const DEAD_BOARDS_PATH = path.join(DATA_ROOT, 'data/dead-boards.tsv');
 
