@@ -143,6 +143,10 @@ export function runDiscovery(filters: ExploreFilters, onEvent: (e: ScanEvent) =>
     let currentSourceCompanies = 0;
     let currentSourceScanned = 0;
 
+    // Workday can take longer than a serverless request budget even when the
+    // other ATS sources already found matches. Return those partial results
+    // promptly on Vercel; local CLI scans retain the deeper time allowance.
+    const timeLimitMs = process.env.VERCEL ? 90_000 : 230_000;
     const killer = setTimeout(() => {
       timedOut = true;
       try {
@@ -150,7 +154,7 @@ export function runDiscovery(filters: ExploreFilters, onEvent: (e: ScanEvent) =>
       } catch {
         /* ignore */
       }
-    }, 230_000);
+    }, timeLimitMs);
 
     // Live progress (atsStart / progress / atsDone) — in --json mode these human
     // lines arrive on STDERR; in legacy mode on STDOUT (handled inside handleLine).
