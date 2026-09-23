@@ -2,6 +2,15 @@ import path from "node:path";
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // The spawned root scanner imports js-yaml outside the Next bundle. Trace
+  // its web-installed package and the preload that resolves it at runtime.
+  outputFileTracingIncludes: {
+    "/api/explore": [
+      "./src/lib/core/scanner-preload.mjs",
+      "./src/lib/core/scanner-resolve.mjs",
+      "./node_modules/js-yaml/**/*",
+    ],
+  },
   // The cloud follow-up route imports the repository's canonical cadence
   // engine so localhost and Vercel cannot drift. Make that explicit instead of
   // relying on lockfile inference; Vercel checks out this complete repository.

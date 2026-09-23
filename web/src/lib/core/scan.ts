@@ -1,5 +1,7 @@
 import { spawn } from "node:child_process";
 import fs from "node:fs";
+import path from "node:path";
+import { pathToFileURL } from "node:url";
 import { careerOpsRoot, rootScript } from "@/lib/career-ops";
 import { writeTempPortals, cleanupTempPortals } from "./portals";
 import { ATS_SOURCES, type DiscoveredOffer, type ExploreFilters, type ScanEvent } from "@/lib/explore";
@@ -86,6 +88,9 @@ export function runDiscovery(filters: ExploreFilters, onEvent: (e: ScanEvent) =>
     const ats = (filters.ats.length ? filters.ats : [...ATS_SOURCES]).filter((a) => (ATS_SOURCES as readonly string[]).includes(a));
     const useJson = scannerSupportsJson();
     const args = [
+      ...(process.env.VERCEL
+        ? ["--import", pathToFileURL(path.join(process.cwd(), "src/lib/core/scanner-preload.mjs")).href]
+        : []),
       rootScript("scan-ats-full"),
       "--dry-run",
       "--since",
