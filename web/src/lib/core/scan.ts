@@ -5,6 +5,7 @@ import path from "node:path";
 import { pathToFileURL } from "node:url";
 import { careerOpsRoot, rootScript } from "@/lib/career-ops";
 import { writeTempPortals, cleanupTempPortals } from "./portals";
+import { normalizeScanOffer } from "./scan-offer.mjs";
 import { ATS_SOURCES, type DiscoveredOffer, type ExploreFilters, type ScanEvent } from "@/lib/explore";
 
 export type { DiscoveredOffer, ScanEvent, AtsSource } from "@/lib/explore";
@@ -72,7 +73,7 @@ export function scannerSupportsJson(): boolean {
   }
 }
 
-type JsonOffer = { company?: string; title?: string; url?: string; location?: string | null; postedAt?: string | null; source?: string };
+type JsonOffer = { company?: unknown; title?: unknown; url?: unknown; location?: unknown; postedAt?: unknown; source?: unknown };
 type ScanJson = {
   companiesAvailable?: number;
   companiesScanned?: number;
@@ -249,16 +250,9 @@ export function runDiscovery(filters: ExploreFilters, onEvent: (e: ScanEvent) =>
         if (p.startsWith(STREAM_OFFER_PREFIX)) {
           try {
             const o = JSON.parse(p.slice(STREAM_OFFER_PREFIX.length)) as JsonOffer;
-            const url = (o.url || "").trim();
-            if (url && o.company && o.title && !seen.has(url)) {
-              seen.add(url);
-              const source = o.source || `${currentAts}-full`;
-              const offer: DiscoveredOffer = {
-                company: o.company, title: o.title, url,
-                location: o.location || "", postedAt: o.postedAt || "",
-                ats: source.replace(/-full$/, ""), source,
-                matchedKeyword: firstMatch(o.title, filters.positive),
-              };
+            const offer: DiscoveredOffer | null = normalizeScanOffer(o, currentAts, filters.positive);
+            if (offer && !seen.has(offer.url)) {
+              seen.add(offer.url);
               offers.push(offer);
               onEvent({ kind: "offer", offer });
             }
@@ -291,20 +285,9 @@ export function runDiscovery(filters: ExploreFilters, onEvent: (e: ScanEvent) =>
         }
         if (j && Array.isArray(j.offers)) {
           for (const o of j.offers) {
-            const url = (o.url || "").trim();
-            if (!url || seen.has(url) || !o.company || !o.title) continue;
-            seen.add(url);
-            const source = o.source || `${currentAts}-full`;
-            const offer: DiscoveredOffer = {
-              company: o.company,
-              title: o.title,
-              location: o.location || "",
-              postedAt: o.postedAt || "",
-              ats: source.replace(/-full$/, ""),
-              source,
-              url,
-              matchedKeyword: firstMatch(o.title, filters.positive),
-            };
+            const offer: DiscoveredOffer | null = normalizeScanOffer(o, currentAts, filters.positive);
+            if (!offer || seen.has(offer.url)) continue;
+            seen.add(offer.url);
             offers.push(offer);
             onEvent({ kind: "offer", offer });
           }
