@@ -78,7 +78,10 @@ export function ExplorerView({
       initFilters(seed.filters);
       void loadFresh();
     } else {
-      initFilters(sp.toString() ? paramsToFilters(sp) : seed.filters);
+      // `run=1` is a navigation flag, not a search filter. Keep the seeded
+      // role/location filters when arriving from Pipeline's first-scan link.
+      const hasFilterParams = ["q", "not", "loc", "noloc", "hardno", "home", "since", "ats", "limit"].some((key) => sp.has(key));
+      initFilters(hasFilterParams ? paramsToFilters(sp) : seed.filters);
       // Onboarding hand-off: ?run=1 auto-fires the free scan + flags the first-run
       // banner (the "matches found from your CV, free" reveal).
       if (sp.get("run") === "1") {

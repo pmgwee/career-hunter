@@ -14,6 +14,11 @@ import { serializePortals } from "../../src/lib/core/portals-serialize.mjs";
 
 const empty = { positive: [], negative: [], allow: [], block: [], alwaysAllow: [], blockHard: [] };
 
+test("an unfiltered search writes a YAML mapping the core scanner can read", () => {
+  const doc = yaml.load(serializePortals(empty));
+  assert.deepEqual(doc, { title_filter: {} });
+});
+
 test("block_hard is written under location_filter", () => {
   const doc = yaml.load(serializePortals({ ...empty, blockHard: ["usa", "brazil"] }));
   assert.deepEqual(doc.location_filter.block_hard, ["usa", "brazil"]);

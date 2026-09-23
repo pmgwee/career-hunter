@@ -30,17 +30,22 @@ function block(key, items) {
  */
 export function serializePortals(f) {
   let out = "# Ephemeral Explorer filters — generated per-search, safe to delete.\n";
-  if (f.positive.length || f.negative.length) {
+  const hasTitleFilters = f.positive.length || f.negative.length;
+  const hasLocationFilters = f.blockHard.length || f.allow.length || f.block.length || f.alwaysAllow.length;
+  if (hasTitleFilters) {
     out += "title_filter:\n";
     out += block("positive", f.positive);
     out += block("negative", f.negative);
   }
-  if (f.blockHard.length || f.allow.length || f.block.length || f.alwaysAllow.length) {
+  if (hasLocationFilters) {
     out += "location_filter:\n";
     out += block("block_hard", f.blockHard);
     out += block("always_allow", f.alwaysAllow);
     out += block("allow", f.allow);
     out += block("block", f.block);
   }
+  // js-yaml 5 rejects a comment-only document; an unrestricted search still
+  // needs a mapping for the core scanner to read.
+  if (!hasTitleFilters && !hasLocationFilters) out += "title_filter: {}\n";
   return out;
 }
