@@ -1,17 +1,17 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import fs from "node:fs";
+import { fileURLToPath } from "node:url";
 import { companyIdentity, companyDomain } from "../../src/lib/company.ts";
-import { parseApplicationsWithAliases } from "../../src/lib/tracker-table.mjs";
+import { parseApplications } from "../../src/lib/tracker-table.mjs";
 
 test("confidential employer uses its confirmed recruiter for display and logo", () => {
-  const aliases = JSON.parse(fs.readFileSync(new URL("../../../tracker-aliases.json", import.meta.url), "utf8"));
+  const root = fileURLToPath(new URL("../../../", import.meta.url));
   const md = [
     "| # | Date | Company | Via | Role | Score | Status | PDF | Report | Notes |",
     "|---|---|---|---|---|---|---|---|---|---|",
     "| 94 | 2026-09-30 | ? | Ambition | AI Engineer (GenAI + Python) | 4.5/5 | Applied | ✅ | [095](../reports/095-confidential-ambition-2026-09-30.md) | Client undisclosed |",
   ].join("\n");
-  const [app] = parseApplicationsWithAliases(md, aliases);
+  const [app] = parseApplications(md, root);
   assert.equal(app.via, "Ambition");
   assert.deepEqual(companyIdentity(app.company, app.via), {
     displayName: "Confidential (via Ambition)", logoName: "Ambition",
