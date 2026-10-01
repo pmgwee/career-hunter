@@ -7,6 +7,7 @@ import { Search, ChevronsUpDown, X, Compass, ArrowRight } from "lucide-react";
 import type { Application, InboxJob } from "@/lib/career-ops";
 import { Badge } from "@/components/ui/badge";
 import { CompanyLogo } from "@/components/company-logo";
+import { companyIdentity } from "@/lib/company";
 import { canonStatus, scoreNum, scoreTone } from "@/lib/format";
 import { InboxTriage } from "@/components/inbox/inbox-triage";
 import { cn } from "@/lib/cn";
@@ -142,7 +143,7 @@ export function PipelineView({
     }
     if (q.trim()) {
       const needle = q.toLowerCase();
-      rows = rows.filter((r) => `${r.company} ${r.role}`.toLowerCase().includes(needle));
+      rows = rows.filter((r) => `${companyIdentity(r.company, r.via).displayName} ${r.via} ${r.role}`.toLowerCase().includes(needle));
     }
     return [...rows].sort((a, b) => {
       if (sort.key === "score") {
@@ -151,6 +152,9 @@ export function PipelineView({
         const av = Number.isNaN(an) ? -Infinity : an;
         const bv = Number.isNaN(bn) ? -Infinity : bn;
         return (av - bv) * sort.dir;
+      }
+      if (sort.key === "company") {
+        return companyIdentity(a.company, a.via).displayName.localeCompare(companyIdentity(b.company, b.via).displayName) * sort.dir;
       }
       return (a[sort.key] || "").localeCompare(b[sort.key] || "") * sort.dir;
     });
@@ -257,8 +261,8 @@ export function PipelineView({
                 <tr key={`${r.n}-${i}`} className="group transition-colors hover:bg-surface/40">
                   <td className="px-4 py-3 font-medium">
                     <Link href={`/pipeline/${r.n}`} className="flex items-center gap-2.5 transition-colors group-hover:text-brand">
-                      <CompanyLogo name={r.company} size={20} />
-                      {r.company}
+                      <CompanyLogo name={companyIdentity(r.company, r.via).logoName} size={20} />
+                      {companyIdentity(r.company, r.via).displayName}
                     </Link>
                   </td>
                   <td className="px-4 py-3 text-muted">
@@ -272,7 +276,7 @@ export function PipelineView({
                       n={r.n}
                       current={r.status}
                       inline
-                      applicationLabel={`${r.company} — ${r.role}`}
+                      applicationLabel={`${companyIdentity(r.company, r.via).displayName} — ${r.role}`}
                       onSaved={(status) => setStatusOverrides((previous) => ({ ...previous, [r.n]: status }))}
                     />
                   </td>

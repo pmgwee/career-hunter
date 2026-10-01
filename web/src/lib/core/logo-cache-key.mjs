@@ -15,8 +15,9 @@ import { createHash } from "node:crypto";
 /** Bump whenever `companyDomains()` in app/api/logo/route.ts changes which
  *  domains it tries, or in what order. The version is part of every key, so
  *  bumping it makes entries written by the previous resolver unreachable.
- *  v2: curated brand domains (notion.so, zoom.us, …) now precede slug guesses. */
-export const COMPANY_KEY_VERSION = "v2";
+ *  v2: curated brand domains (notion.so, zoom.us, …) now precede slug guesses.
+ *  v3: Ambition resolves to its verified recruitment site, not ambition.com. */
+export const COMPANY_KEY_VERSION = "v3";
 
 /** Cache key for a company name, or null if the name carries nothing to key on.
  *
