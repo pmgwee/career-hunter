@@ -1,3 +1,18 @@
+/** Accept the canonical v1.36 stream and the older web-launcher protocol. */
+export function parseStreamOffer(line, currentAts, positives = []) {
+  const prefix = '@@CAREER_OPS_OFFER@@';
+  const text = String(line ?? '').trim();
+  const legacy = text.startsWith(prefix);
+  if (!legacy && !text.startsWith('{')) return null;
+  try {
+    const raw = JSON.parse(legacy ? text.slice(prefix.length) : text);
+    if (!legacy && raw?.kind !== 'offer') return null;
+    return normalizeScanOffer(raw, currentAts, positives);
+  } catch {
+    return null;
+  }
+}
+
 /** Normalize external ATS data before it reaches client-side sorting/rendering. */
 export function normalizeScanOffer(raw, currentAts, positives = []) {
   if (!raw || typeof raw !== 'object') return null;

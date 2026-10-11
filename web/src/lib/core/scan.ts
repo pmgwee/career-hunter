@@ -2,7 +2,7 @@ import { spawn } from "node:child_process";
 import fs from "node:fs";
 import { careerOpsRoot, rootScript } from "@/lib/career-ops";
 import { writeTempPortals, cleanupTempPortals } from "./portals";
-import { normalizeScanOffer } from "./scan-offer.mjs";
+import { normalizeScanOffer, parseStreamOffer } from "./scan-offer.mjs";
 import { ATS_SOURCES, type DiscoveredOffer, type ExploreFilters, type ScanEvent } from "@/lib/explore";
 
 export type { DiscoveredOffer, ScanEvent, AtsSource } from "@/lib/explore";
@@ -33,7 +33,6 @@ const ATS_DONE_RE = /done \((\d+) unreachable boards skipped\)/;
 const COMPANIES_RE = /Companies scanned:\s+(\d+)/;
 const UNREACHABLE_RE = /Unreachable boards:\s+(\d+)/;
 const SUMMARY_RE = /New matches:\s+(\d+)/;
-const STREAM_OFFER_PREFIX = "@@CAREER_OPS_OFFER@@";
 
 function firstMatch(title: string, positives: string[]): string | undefined {
   const lower = title.toLowerCase();
@@ -223,16 +222,12 @@ export function runDiscovery(filters: ExploreFilters, onEvent: (e: ScanEvent) =>
       errBuf = parts.pop() ?? "";
       for (const p of parts) {
         if (!p.trim()) continue;
-        if (p.startsWith(STREAM_OFFER_PREFIX)) {
-          try {
-            const offer: DiscoveredOffer | null = normalizeScanOffer(JSON.parse(p.slice(STREAM_OFFER_PREFIX.length)) as JsonOffer, currentAts, filters.positive);
-            if (offer && !seen.has(offer.url)) {
-              seen.add(offer.url);
-              offers.push(offer);
-              onEvent({ kind: "offer", offer });
-            }
-          } catch {
-            /* malformed progress event must not break the scan */
+        const streamed: DiscoveredOffer | null = parseStreamOffer(p, currentAts, filters.positive);
+        if (streamed) {
+          if (!seen.has(streamed.url)) {
+            seen.add(streamed.url);
+            offers.push(streamed);
+            onEvent({ kind: "offer", offer: streamed });
           }
           continue;
         }
