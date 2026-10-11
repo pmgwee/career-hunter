@@ -91,6 +91,8 @@ const HOPS = [
   { key: 'appliedToResponded', from: 'Applied', to: 'Responded' },
   { key: 'respondedToAssessment', from: 'Responded', to: 'Assessment' },
   { key: 'assessmentToInterview', from: 'Assessment', to: 'Interview' },
+  // Keep the direct hop for legacy rows that moved from Responded straight to
+  // Interview before Assessment became a first-class lifecycle stage.
   { key: 'respondedToInterview', from: 'Responded', to: 'Interview', excludeIntermediate: 'Assessment' },
   { key: 'interviewToOffer', from: 'Interview', to: 'Offer' },
   { key: 'appliedToRejected', from: 'Applied', to: 'Rejected' },
@@ -599,6 +601,22 @@ function selfTest() {
   check(velocity.appliedToResponded.censored === 3, `velocity: expected 3 censored, got ${velocity.appliedToResponded.censored}`);
   check(velocity.appliedToRejected.censored === 0, 'velocity: rejection hop does not double-count censoring');
   check(velocity.interviewToOffer.n === 1 && velocity.interviewToOffer.insufficientData, 'velocity: I→O n=1 insufficient');
+
+  const ASSESSMENT_FIXTURE = [
+    '10\t2026-06-01\tApplied\tResponded\tset-status\t',
+    '10\t2026-06-04\tResponded\tAssessment\tset-status\t',
+    '10\t2026-06-09\tAssessment\tInterview\tset-status\t',
+  ].join('\n');
+  const assessmentVelocity = computeVelocity(
+    foldObservations(parseStatusLog(ASSESSMENT_FIXTURE, states).observations),
+    TODAY,
+  );
+  check(assessmentVelocity.respondedToAssessment.n === 1,
+    `velocity: Responded→Assessment expected n=1, got ${assessmentVelocity.respondedToAssessment.n}`);
+  check(assessmentVelocity.assessmentToInterview.n === 1,
+    `velocity: Assessment→Interview expected n=1, got ${assessmentVelocity.assessmentToInterview.n}`);
+  check(assessmentVelocity.respondedToInterview.n === 0,
+    `velocity: Assessment path must not count as legacy Responded→Interview, got n=${assessmentVelocity.respondedToInterview.n}`);
 
   // three completed A→R measurements → median renders
   const logWithThird = LOG_FIXTURE + '\n4\t2026-06-27\tApplied\tResponded\tset-status\t';

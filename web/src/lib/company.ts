@@ -10,6 +10,8 @@
 
 /** Curated name → domain overrides for the common cases slug+.com gets wrong. */
 const DOMAIN_OVERRIDES: Record<string, string> = {
+  // Confirmed by Ambition's LinkedIn About page (Malaysia country website).
+  ambition: "ambition.com.my",
   anthropic: "anthropic.com",
   openai: "openai.com",
   google: "google.com",
@@ -102,6 +104,21 @@ const DOMAIN_OVERRIDES: Record<string, string> = {
 };
 
 const LEGAL_SUFFIX = /\b(inc|llc|ltd|limited|gmbh|co|corp|corporation|sa|s\.a|ag|plc|sl|s\.l|bv|oy|ab|company|group|holdings|technologies|technology|labs|systems)\b/gi;
+
+const UNDISCLOSED_COMPANY = /^(?:\?|[-—–]|confidential|undisclosed|unknown)?$/i;
+
+/** Presentation only: a recruiter must never replace the canonical employer.
+ *  Unknown clients display their confirmed agency and use that agency's logo. */
+export function companyIdentity(company: string | undefined | null, via?: string | null): {
+  displayName: string;
+  logoName: string;
+} {
+  const employer = (company ?? "").trim();
+  if (!UNDISCLOSED_COMPANY.test(employer)) return { displayName: employer, logoName: employer };
+  const agency = (via ?? "").trim();
+  if (UNDISCLOSED_COMPANY.test(agency)) return { displayName: "Confidential", logoName: "Confidential" };
+  return { displayName: `Confidential (via ${agency})`, logoName: agency };
+}
 
 /** Normalize a company name to a likely registrable domain, or null if empty. */
 export function companyDomain(name: string | undefined | null): string | null {

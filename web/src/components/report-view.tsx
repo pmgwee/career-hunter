@@ -8,6 +8,7 @@ import { scoreTone, scoreNum, legitimacyTone, parseReport } from "@/lib/format";
 import { cleanHeading, splitSections } from "@/lib/report-sections.mjs";
 import { StatusSelect } from "@/components/status-select";
 import { CompanyLogo } from "@/components/company-logo";
+import { companyIdentity } from "@/lib/company";
 import { ScoreMethodology } from "@/components/score-methodology";
 import { GeneratePdfButton } from "@/components/generate-pdf-button";
 import { ApplyButton } from "@/components/apply-button";
@@ -67,6 +68,7 @@ export function ReportView({
   const date = app?.date || field("Date");
   const archetype = field("Archetype");
   const url = field("URL");
+  const identity = companyIdentity(app?.company ?? meta?.title ?? `Report #${id}`, app?.via || field("Via"));
 
   return (
     <PageFrame>
@@ -80,9 +82,9 @@ export function ReportView({
       <header className="mt-5">
         <p className="font-mono text-xs uppercase tracking-[0.18em] text-faint">#{id}</p>
         <div className="mt-2 flex items-center gap-3">
-          <CompanyLogo name={app?.company ?? meta?.title ?? `Report #${id}`} size={40} />
+          <CompanyLogo name={identity.logoName} size={40} />
           <h1 className="font-display text-3xl tracking-tight text-landing">
-            {app?.company ?? meta?.title ?? `Report #${id}`}
+            {identity.displayName}
           </h1>
         </div>
         {app?.role && <p className="mt-1 text-muted">{app.role}</p>}

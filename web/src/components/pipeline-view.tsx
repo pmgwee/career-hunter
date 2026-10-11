@@ -7,12 +7,14 @@ import { Search, ChevronsUpDown, X, Compass, ArrowRight } from "lucide-react";
 import type { Application, InboxJob } from "@/lib/career-ops";
 import { Badge } from "@/components/ui/badge";
 import { CompanyLogo } from "@/components/company-logo";
-import { canonStatus, scoreNum, scoreTone, statusDot } from "@/lib/format";
+import { companyIdentity } from "@/lib/company";
+import { canonStatus, scoreNum, scoreTone } from "@/lib/format";
 import { InboxTriage } from "@/components/inbox/inbox-triage";
 import { cn } from "@/lib/cn";
 import { PageFrame } from "@/components/page-frame";
 import { PipelineTableRowsSkeleton } from "@/components/page-loading-skeletons";
 import { startRouteProgress } from "@/components/route-progress";
+import { StatusSelect } from "@/components/status-select";
 
 // INBOX (the triage queue) is the default tab; the rest filter the tracker.
 const TABS = [
@@ -46,6 +48,26 @@ export function PipelineView({
   const pathname = usePathname();
   const [isPending, startTransition] = useTransition();
   const [pendingTab, setPendingTab] = useState<Tab | null>(null);
+  const [statusOverrides, setStatusOverrides] = useState<Record<string, string>>({});
+
+  // Reflect a successful write immediately, including tab counts and filtering,
+  // while router.refresh() retrieves the authoritative tracker snapshot.
+  const visibleApplications = useMemo(
+    () => applications.map((row) =>
+      statusOverrides[row.n] ? { ...row, status: statusOverrides[row.n] } : row,
+    ),
+    [applications, statusOverrides],
+  );
+
+  useEffect(() => {
+    setStatusOverrides((previous) => {
+      const next = { ...previous };
+      for (const row of applications) {
+        if (next[row.n] === row.status) delete next[row.n];
+      }
+      return Object.keys(next).length === Object.keys(previous).length ? previous : next;
+    });
+  }, [applications]);
 
   // The URL is the SINGLE source of truth for tab/min/sort/dir, so the home stat
   // tiles' deep links AND the assistant's filterPipeline/navigate actions drive
@@ -111,7 +133,7 @@ export function PipelineView({
 
   const filtered = useMemo(() => {
     if (tab === "INBOX") return [];
-    let rows = applications;
+    let rows = visibleApplications;
     if (tab !== "ALL") rows = rows.filter((r) => canonStatus(r.status).includes(tab));
     if (minFilter != null) {
       rows = rows.filter((r) => {
@@ -121,7 +143,7 @@ export function PipelineView({
     }
     if (q.trim()) {
       const needle = q.toLowerCase();
-      rows = rows.filter((r) => `${r.company} ${r.role}`.toLowerCase().includes(needle));
+      rows = rows.filter((r) => `${companyIdentity(r.company, r.via).displayName} ${r.via} ${r.role}`.toLowerCase().includes(needle));
     }
     return [...rows].sort((a, b) => {
       if (sort.key === "score") {
@@ -131,9 +153,12 @@ export function PipelineView({
         const bv = Number.isNaN(bn) ? -Infinity : bn;
         return (av - bv) * sort.dir;
       }
+      if (sort.key === "company") {
+        return companyIdentity(a.company, a.via).displayName.localeCompare(companyIdentity(b.company, b.via).displayName) * sort.dir;
+      }
       return (a[sort.key] || "").localeCompare(b[sort.key] || "") * sort.dir;
     });
-  }, [applications, tab, q, sort, minFilter]);
+  }, [visibleApplications, tab, q, sort, minFilter]);
 
   return (
     <PageFrame>
@@ -142,7 +167,7 @@ export function PipelineView({
           <h1 className="font-display text-2xl tracking-tight text-landing">Pipeline</h1>
           <p className="mt-1 text-sm text-muted">
             <span className="tabular-nums">{pendingInbox.length}</span> in inbox ·{" "}
-            <span className="tabular-nums">{applications.length}</span> tracked
+            <span className="tabular-nums">{visibleApplications.length}</span> tracked
           </p>
         </div>
         {/* the tracker has its own search; the inbox brings its own facet filters */}
@@ -166,8 +191,8 @@ export function PipelineView({
             t === "INBOX"
               ? pendingInbox.length
               : t === "ALL"
-                ? applications.length
-                : applications.filter((r) => canonStatus(r.status).includes(t)).length;
+                ? visibleApplications.length
+                : visibleApplications.filter((r) => canonStatus(r.status).includes(t)).length;
           return (
             <button
               key={t}
@@ -236,8 +261,8 @@ export function PipelineView({
                 <tr key={`${r.n}-${i}`} className="group transition-colors hover:bg-surface/40">
                   <td className="px-4 py-3 font-medium">
                     <Link href={`/pipeline/${r.n}`} className="flex items-center gap-2.5 transition-colors group-hover:text-brand">
-                      <CompanyLogo name={r.company} size={20} />
-                      {r.company}
+                      <CompanyLogo name={companyIdentity(r.company, r.via).logoName} size={20} />
+                      {companyIdentity(r.company, r.via).displayName}
                     </Link>
                   </td>
                   <td className="px-4 py-3 text-muted">
@@ -247,10 +272,13 @@ export function PipelineView({
                     <Badge tone={scoreTone(r.score)}>{r.score || "—"}</Badge>
                   </td>
                   <td className="whitespace-nowrap px-4 py-3 text-muted">
-                    <span className="inline-flex items-center gap-1.5">
-                      <span className={cn("size-1.5 shrink-0 rounded-full", statusDot(r.status))} />
-                      {r.status}
-                    </span>
+                    <StatusSelect
+                      n={r.n}
+                      current={r.status}
+                      inline
+                      applicationLabel={`${companyIdentity(r.company, r.via).displayName} — ${r.role}`}
+                      onSaved={(status) => setStatusOverrides((previous) => ({ ...previous, [r.n]: status }))}
+                    />
                   </td>
                   <td className="whitespace-nowrap px-4 py-3 text-faint tabular-nums">{r.date}</td>
                 </tr>
