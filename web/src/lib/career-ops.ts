@@ -130,6 +130,10 @@ export type Application = {
   /** Intermediary channel (#1596): agency/recruiter firm, "—" for direct, "" when the tracker has no Via column. */
   via: string;
   role: string;
+  /** Tracker fields added by newer core releases; absent on legacy in-memory rows. */
+  location?: string;
+  applyLink?: string;
+  followUp?: string;
   score: string;
   status: string;
   pdf: string;
@@ -147,7 +151,7 @@ export type Application = {
 export function readApplications(): Application[] {
   const md = read("data/applications.md");
   if (!md) return [];
-  return parseApplications(md, careerOpsRoot());
+  return parseApplications(md, careerOpsRoot(), path.resolve(process.cwd(), "..")) as Application[];
 }
 
 /**
