@@ -13559,7 +13559,9 @@ try {
   // warning assertion below fails. Same reasoning as the GIT_CONFIG_* pinning
   // in section 12c.
   const emptyClaudeCfg = mkdtempSync(join(tmpdir(), 'co-emptycfg-'));
-  const doctorEnv = { env: { ...process.env, CLAUDE_CONFIG_DIR: emptyClaudeCfg } };
+  // Pin the CLI as well: earlier tests can load the checkout's .env.
+  // These fixtures exercise Claude's MCP registration, not the user's CLI.
+  const doctorEnv = { env: { ...process.env, CAREER_OPS_CLI: 'claude', CLAUDE_CONFIG_DIR: emptyClaudeCfg } };
 
   // No project MCP config → doctor surfaces a (non-fatal) warning instead of
   // letting SPA job boards fail silently. doctor reads project MCP config from
@@ -16474,9 +16476,10 @@ try {
         const countIn = (allowed) => canonical.filter((status) => allowed.has(status)).length;
         const applied = countIn(new Set(['APPLIED', 'RESPONDED', 'ASSESSMENT', 'INTERVIEW', 'OFFER', 'HIRED', 'REJECTED']));
         const responded = countIn(new Set(['RESPONDED', 'ASSESSMENT', 'INTERVIEW', 'OFFER', 'HIRED']));
+        const assessment = countIn(new Set(['ASSESSMENT', 'INTERVIEW', 'OFFER', 'HIRED']));
         const interview = countIn(new Set(['INTERVIEW', 'OFFER', 'HIRED']));
         const offer = countIn(new Set(['OFFER', 'HIRED']));
-        const expectedFunnel = [canonical.length, applied, responded, interview, offer];
+        const expectedFunnel = [canonical.length, applied, responded, assessment, interview, offer];
         const metrics = computeProgressMetrics(synthetic);
         const actualFunnel = metrics.funnel?.map((stage) => stage.count) ?? [];
         const expectedActive = countIn(new Set(canonical.filter((status) => !['REJECTED', 'DISCARDED'].includes(status))));

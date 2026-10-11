@@ -21,13 +21,21 @@ const DOCTOR = join(ROOT, 'doctor.mjs');
 // Scenarios that exercise the plugin path pass their own CLAUDE_CONFIG_DIR.
 const EMPTY_CONFIG_DIR = mkdtempSync(join(tmpdir(), 'co-mcp-emptycfg-'));
 
+function fixtureEnv(env) {
+  const inherited = { ...process.env };
+  // Remove rather than blank: dotenv must still be able to populate this key
+  // in the scenario that exercises a fixture's own .env configuration.
+  delete inherited.CAREER_OPS_CLI;
+  return { ...inherited, CLAUDE_CONFIG_DIR: EMPTY_CONFIG_DIR, ...env };
+}
+
 function runDoctor(cwd, args, env, { executionCwd = cwd } = {}) {
   try {
     const out = execFileSync(NODE, [DOCTOR, '--json', '--target', cwd, ...args], {
       cwd: executionCwd,
       // Order matters: the empty dir must override an ambient CLAUDE_CONFIG_DIR
       // from the developer's own shell, while a scenario's explicit env still wins.
-      env: { ...process.env, CLAUDE_CONFIG_DIR: EMPTY_CONFIG_DIR, ...env },
+      env: fixtureEnv(env),
       encoding: 'utf-8',
       stdio: ['ignore', 'pipe', 'pipe'],
     }).trim();
@@ -41,7 +49,7 @@ function runDoctorHuman(cwd, env, { executionCwd = cwd } = {}) {
   try {
     return execFileSync(NODE, [DOCTOR, '--target', cwd], {
       cwd: executionCwd,
-      env: { ...process.env, CLAUDE_CONFIG_DIR: EMPTY_CONFIG_DIR, ...env },
+      env: fixtureEnv(env),
       encoding: 'utf-8',
       stdio: ['ignore', 'pipe', 'pipe'],
     });
