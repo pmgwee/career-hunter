@@ -16484,7 +16484,7 @@ try {
         const actualFunnel = metrics.funnel?.map((stage) => stage.count) ?? [];
         const expectedActive = countIn(new Set(canonical.filter((status) => !['REJECTED', 'DISCARDED'].includes(status))));
         const expectedOffers = offer;
-        const contractOk = metrics.tracked === canonical.length
+        const contractOk = metrics.evaluated === canonical.length
           && JSON.stringify(actualFunnel) === JSON.stringify(expectedFunnel)
           && metrics.activeApps === expectedActive
           && metrics.totalOffers === expectedOffers;
