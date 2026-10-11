@@ -91,9 +91,7 @@ const HOPS = [
   { key: 'appliedToResponded', from: 'Applied', to: 'Responded' },
   { key: 'respondedToAssessment', from: 'Responded', to: 'Assessment' },
   { key: 'assessmentToInterview', from: 'Assessment', to: 'Interview' },
-  // Keep the direct hop for legacy rows that moved from Responded straight to
-  // Interview before Assessment became a first-class lifecycle stage.
-  { key: 'respondedToInterview', from: 'Responded', to: 'Interview' },
+  { key: 'respondedToInterview', from: 'Responded', to: 'Interview', excludeIntermediate: 'Assessment' },
   { key: 'interviewToOffer', from: 'Interview', to: 'Offer' },
   { key: 'appliedToRejected', from: 'Applied', to: 'Rejected' },
 ];
@@ -222,7 +220,10 @@ export function computeVelocity(timelines, todayStr) {
     for (const timeline of timelines.values()) {
       const fromIdx = timeline.findIndex(o => o.to === hop.from && o.dayMath);
       if (fromIdx === -1) continue;
-      const next = timeline.slice(fromIdx + 1).find(o => o.to === hop.to && o.dayMath);
+      const later = timeline.slice(fromIdx + 1);
+      const nextIdx = later.findIndex(o => o.to === hop.to && o.dayMath);
+      const next = nextIdx === -1 ? null : later[nextIdx];
+      if (next && hop.excludeIntermediate && later.slice(0, nextIdx).some(o => o.to === hop.excludeIntermediate)) continue;
       if (next) {
         const d = daysBetween(timeline[fromIdx].date, next.date);
         if (d === null || d < 0) continue;
@@ -669,7 +670,7 @@ function selfTest() {
   check(led.calibration.basis === 'ledger', 'ledger-funnel: log present → ledger basis');
   check(led.calibration.everApplied === 25, `ledger-funnel: everApplied still 25, got ${led.calibration.everApplied}`);
   check(led.calibration.interviewRate.ownPct === 8, `ledger-funnel: 2/25 reached Interview → 8%, got ${led.calibration.interviewRate.ownPct}`);
-  check(led.calibration.responseRate.ownPct === 12, `ledger-funnel: 3/25 reached Responded → 12%, got ${led.calibration.responseRate.ownPct}`);
+  check(led.calibration.responseRate.ownPct === 16, `ledger-funnel: 4/25 received a reply including rejection → 16%, got ${led.calibration.responseRate.ownPct}`);
   check(renderSummary(led, TODAY).includes('rates fold status-log history'), 'ledger-funnel: summary flags the folded basis');
   check(!renderSummary(snap, TODAY).includes('rates fold status-log history'), 'ledger-funnel: snapshot summary carries no fold note');
 
