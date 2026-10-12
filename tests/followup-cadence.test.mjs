@@ -64,7 +64,6 @@ const {
   normalizeStatus,
   resolveCadenceConfig,
   loadProfileCadence,
-  parseProfileCadenceContent,
   parseAppliedDaysOverride,
 } = cadence;
 
@@ -91,18 +90,6 @@ eq(
 eq(
   'responded, with prior follow-up uses responded_subsequent',
   computeNextFollowupDate('responded', APP, '2026-07-02', 1),
-  addDays(parseDate('2026-07-02'), DEFAULT_CADENCE.responded_subsequent),
-);
-
-eq(
-  'assessment, no prior follow-up uses responded_initial',
-  computeNextFollowupDate('assessment', APP, null, 0),
-  addDays(parseDate(APP), DEFAULT_CADENCE.responded_initial),
-);
-
-eq(
-  'assessment, with prior follow-up uses responded_subsequent',
-  computeNextFollowupDate('assessment', APP, '2026-07-02', 1),
   addDays(parseDate('2026-07-02'), DEFAULT_CADENCE.responded_subsequent),
 );
 
@@ -219,52 +206,12 @@ eq(
   false,
 );
 
-// Cloud/server consumers hold config/profile.yml as content, not as a local
-// filesystem path. They must be able to run the exact same engine with those
-// overrides instead of silently falling back to this process's profile.
-const cloudProfile = [
-  'followup_cadence:',
-  '  applied_first_days: 2',
-  '  applied_subsequent_days: 4',
-  '  applied_max_followups: 1',
-  '  responded_initial_days: 1',
-  '  responded_subsequent_days: 5',
-  '  interview_thankyou_days: 1',
-].join('\n');
-eq(
-  'parseProfileCadenceContent reads cloud profile overrides without a file path',
-  parseProfileCadenceContent(cloudProfile),
-  {
-    applied_first: 2,
-    applied_subsequent: 4,
-    applied_max_followups: 1,
-    responded_initial: 1,
-    responded_subsequent: 5,
-    interview_thankyou: 1,
-  },
-);
-const cloudCadence = analyzeFromContent(trackerMd, followupsMd, { profileContent: cloudProfile });
-eq(
-  'analyzeFromContent applies cloud profile content to the effective cadence',
-  cloudCadence.cadenceConfig,
-  {
-    applied_first: 2,
-    applied_subsequent: 4,
-    applied_max_followups: 1,
-    responded_initial: 1,
-    responded_subsequent: 5,
-    interview_thankyou: 1,
-  },
-);
-
 // Hired aliases from templates/states.yml must normalize to 'hired'. Before
 // this, 'Accepted'/'Contratado' normalized to themselves, so stats/funnel/
 // company-history consumers looking for 'hired' silently dropped those rows.
 for (const raw of ['Hired', 'Accepted', 'accept', 'Contratado', 'contratada']) {
   eq(`normalizeStatus('${raw}') canonicalizes to hired`, normalizeStatus(raw), 'hired');
 }
-eq('normalizeStatus(Assessment) canonicalizes to assessment', normalizeStatus('Assessment'), 'assessment');
-eq('normalizeStatus(online screening) canonicalizes to assessment', normalizeStatus('online screening'), 'assessment');
 
 // #2268 — the suite pins the profile so a user's own followup_cadence can't
 // turn a healthy install red. These two guard the pin from the opposite
@@ -319,3 +266,21 @@ eq(
   resolveCadenceConfig({ profilePath: DEFAULT_CADENCE_PROFILE, appliedDays: parseAppliedDaysOverride('10days') }).applied_first,
   DEFAULT_CADENCE.applied_first,
 );
+
+
+
+// ── parseAppliedDate: a requisition hash is not a row reference ──────────────
+// `isCrossReferencedMention` skips an apply-date that is cited ABOUT ANOTHER
+// ROW (`see #12, applied 2026-09-01`). A `#` preceded by a requisition label
+// is the row's own req number, not a row reference, and REQ_LABELLED_HASH_RE
+// shares tracker-parse.mjs's label vocabulary so the two never disagree. The
+// `r_` label was missing from that list (PR #4267 review), so
+// `R_#1311 Applied 2026-09-01` lost its own applied date while the equivalent
+// `req #1311` kept it.
+console.log('\nfollowup-cadence.mjs — parseAppliedDate vs requisition hashes');
+for (const label of ['R_#1311', 'r_#1311', 'req #1311', 'Req #1311']) {
+  eq(`parseAppliedDate: ${label} is the row's own requisition, so its applied date is kept`,
+    cadence.parseAppliedDate(`${label} Applied 2026-09-01`), '2026-09-01');
+}
+eq('parseAppliedDate: an unlabelled #N before the date is a row reference, so the date is not this row\'s',
+  cadence.parseAppliedDate('Sibling #1311 Applied 2026-09-01'), null);

@@ -17,6 +17,7 @@ import { spawnSync } from 'child_process';
 import { existsSync, mkdtempSync, mkdirSync, readFileSync, writeFileSync } from 'fs';
 import { tmpdir } from 'os';
 import { join, relative, sep } from 'path';
+import { pathToFileURL } from 'url';
 
 console.log('\nweb → core argv contract');
 
@@ -27,6 +28,14 @@ console.log('\nweb → core argv contract');
 //                  --help, so an argv the script rejects still exits 1 naming
 //                  the flag, and exit 0 with usage means every flag was
 //                  accepted. Same verdict on the flags, no network.
+//   'json-any-exit' — spawn the exact argv and require stdout to parse as JSON,
+//                  WHATEVER the exit status. For scripts whose contract is "you
+//                  always get a payload": analyze-patterns.mjs exits 1 when it
+//                  is under its minimum sample while still printing the object
+//                  that explains why, and /api/patterns renders that object. A
+//                  'run' probe would read the by-design exit 1 as a break; not
+//                  probing at all would miss the core dropping the payload,
+//                  which is the one change that silently empties the panel.
 //   'none'       — the call site spawns node with an inline module rather than
 //                  a root script with flags; listed so the enumeration at the
 //                  bottom stays complete.
@@ -79,6 +88,36 @@ const CALL_SITES = [
     probe: 'flags-only',
   },
   {
+    source: 'web/src/app/api/quiet-companies/route.ts',
+    script: 'rejection-latency.mjs',
+    // The route parses stdout, so the payload is the contract, not just exit 0.
+    expectJson: true,
+    // No flags: it prints JSON by default, like stats.mjs and upskill.mjs. With
+    // no data/active-interviews.md in the fixture it reports zero rows checked
+    // and still exits 0, which is the shape the route reads.
+    args: [],
+    probe: 'run',
+  },
+  {
+    source: 'web/src/app/api/stats/route.ts',
+    script: 'stats.mjs',
+    // NO FLAGS. stats.mjs prints JSON by default and rejects `--json` outright
+    // ("unrecognized flag(s): --json"), unlike every other route here — which is
+    // exactly the drift this file exists to catch, so the empty argv is the
+    // assertion.
+    args: [],
+    probe: 'json-any-exit',
+  },
+  {
+    source: 'web/src/app/api/patterns/route.ts',
+    script: 'analyze-patterns.mjs',
+    // Exits 1 on this one-row fixture, by design: it is under its minimum
+    // sample and says so in a JSON payload the route renders. The contract is
+    // the payload, not the status.
+    args: [],
+    probe: 'json-any-exit',
+  },
+  {
     source: 'web/src/lib/core/pipeline.ts',
     script: null,
     args: [],
@@ -120,11 +159,50 @@ export function verifyWebStaticSources({ root = ROOT, reportPass = pass, reportF
   // Every `"--flag"` literal in a listed source must appear in its argv here.
   // This covers the argv literals the routes write inline; it does NOT cover a
   // flag assembled at runtime from a variable or a template string.
+  // This fork's web release replaces these CLI routes with authenticated,
+  // in-process cloud adapters. Keep the core argv probes above, but validate
+  // the actual route boundary instead of requiring a subprocess that vanished.
+  const cloud = existsSync(join(webSrcRoot, 'lib/workspace/snapshot.ts'));
+  const cloudAdapters = new Map([
+    ['web/src/app/api/followups/route.ts', ['loadFollowupsResponse']],
+    ['web/src/app/api/followups/cadence/route.ts', ['loadCareerWorkspace', 'DEFAULT_CADENCE']],
+    ['web/src/app/api/doctor/route.ts', ['loadCareerWorkspace']],
+    ['web/src/app/api/status/route.ts', ['loadCareerWorkspace', 'canonicalizeStatus']],
+  ]);
+  // These new local-only panels are not part of this independently versioned
+  // cloud web release. Their core scripts are still probed on every run.
+  const localOnlySources = new Set([
+    'web/src/app/api/quiet-companies/route.ts',
+    'web/src/app/api/stats/route.ts',
+    'web/src/app/api/patterns/route.ts',
+  ]);
+  const absentLocalPanels = new Set();
   const flagDrift = [];
   for (const site of CALL_SITES) {
+    if (cloud && localOnlySources.has(site.source) && !existsSync(join(root, site.source))) {
+      absentLocalPanels.add(site.source);
+      reportPass(`${site.source} is outside this cloud web release; core argv remains probed`);
+      continue;
+    }
     const src = readFileSync(join(root, site.source), 'utf-8');
+    if (cloud && cloudAdapters.has(site.source)) {
+      const required = cloudAdapters.get(site.source);
+      if (required.every((symbol) => new RegExp(`\\b${symbol}\\b`).test(src)) && !/\b(execFile|spawn)\(/.test(src))
+        reportPass(`${site.source} retains its authenticated cloud adapter contract`);
+      else reportFail(`${site.source} no longer satisfies its cloud adapter contract`);
+    }
     const literals = [...new Set([...src.matchAll(/"(--[a-z][a-z0-9-]*)"/g)].map((m) => m[1]))];
     for (const flag of literals) {
+      if (cloud && site.source === 'web/src/lib/core/scan.ts' && flag === '--import') {
+        // Node owns this flag, not scan-ats-full's validator. Exercise the real
+        // dependency resolver rather than pretending it is a scanner option.
+        const preload = pathToFileURL(join(webSrcRoot, 'lib/core/scanner-preload.mjs')).href;
+        const result = spawnSync(NODE, ['--import', preload, '--input-type=module', '--eval', 'import "js-yaml";'],
+          { cwd: root, encoding: 'utf8', timeout: 10000 });
+        if (result.status === 0) reportPass('cloud scanner Node --import preload resolves its YAML dependency');
+        else reportFail('cloud scanner Node --import preload failed to resolve its YAML dependency');
+        continue;
+      }
       if (!site.args.includes(flag))
         flagDrift.push(`${site.source} passes ${flag}, which no probe above covers`);
     }
@@ -147,7 +225,8 @@ export function verifyWebStaticSources({ root = ROOT, reportPass = pass, reportF
     reportPass(`all ${spawners.length} web sources that spawn a core script are listed here`);
   else reportFail(`web sources spawning a core script with no argv probe: ${unlisted.join(', ')}`);
 
-  const stale = [...listed].filter((f) => !spawners.includes(f));
+  const stale = [...listed].filter((f) => !spawners.includes(f)
+    && !(cloud && cloudAdapters.has(f)) && !absentLocalPanels.has(f));
   if (stale.length === 0) reportPass('no stale entries — every listed source still spawns a core script');
   else reportFail(`listed sources that no longer spawn a core script: ${stale.join(', ')}`);
 
@@ -199,6 +278,23 @@ export function runWebCoreArgvContract() {
         fail(`${label} — did not run (${result.error?.message || `killed by ${result.signal}`})`);
         continue;
       }
+      if (site.probe === 'json-any-exit') {
+        // The status is deliberately not asserted; the payload is the contract.
+        // A rejected flag still fails here, because the script then prints usage
+        // to stderr and nothing parseable to stdout.
+        const start = (result.stdout || '').indexOf('{');
+        try {
+          if (start < 0) throw new Error('no JSON object on stdout');
+          JSON.parse(result.stdout.slice(start));
+          pass(`${label} — stdout parses as JSON at exit ${result.status} (${site.source})`);
+        } catch (e) {
+          const why = /unrecognized flag/.test(result.stderr || '')
+            ? `${site.script} rejects a flag ${site.source} passes — ${result.stderr.trim()}`
+            : `${e.message}; stderr: ${(result.stderr || '').trim().split('\n').slice(0, 2).join(' | ')}`;
+          fail(`${label} — exit ${result.status} and ${why}`);
+        }
+        continue;
+      }
       if (result.status !== 0) {
         // The flag rejection is the failure this file exists to catch, so name it.
         const why = /unrecognized flag/.test(result.stderr || '')
@@ -207,7 +303,12 @@ export function runWebCoreArgvContract() {
         fail(`${label} — ${why}`);
         continue;
       }
-      if (site.probe === 'run' && argv.includes('--json')) {
+      // JSON is asserted for a no-flag probe too. Three of these scripts
+      // (stats, upskill, rejection-latency) print JSON BY DEFAULT and reject a
+      // --json flag, so keying the check on the flag skipped exactly the sites
+      // whose routes parse stdout — a script that started printing a banner
+      // would have passed this probe and returned `available: false` in the app.
+      if (site.probe === 'run' && (argv.includes('--json') || site.expectJson)) {
         try {
           JSON.parse(result.stdout);
           pass(`${label} — exit 0, stdout parses as JSON (${site.source})`);
