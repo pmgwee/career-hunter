@@ -1,5 +1,7 @@
 import type { DiscoveredOffer } from "@/lib/explore";
 import { loadCareerWorkspace } from "@/lib/workspace/snapshot";
+import { collectWhatsNew, resolveOfferLimit } from "@/lib/whats-new.mjs";
+import { getNormalizeTextKey } from "@/lib/core/text-key";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -21,7 +23,8 @@ export async function GET(req: Request) {
   const rows = (snapshot.files.get("data/scan-history.tsv") ?? "").split("\n");
 
   // Companies already evaluated → don't resurface as "new".
-  const norm = (value: string) => value.normalize("NFKC").toLocaleLowerCase().replace(/[^\p{L}\p{N}]+/gu, " ").trim();
+  const normalizeTextKey = await getNormalizeTextKey();
+  const norm = (value: string) => normalizeTextKey(value, " ");
   const evaluated = new Set(snapshot.applications.map((application) => norm(application.company)).filter(Boolean));
 
   const toOffer = (c: string[]): DiscoveredOffer | null => {
@@ -40,30 +43,9 @@ export async function GET(req: Request) {
     };
   };
 
-  const seen = new Set<string>();
-  const offers: DiscoveredOffer[] = [];
-  let anyDated = false;
-  // Pass 1: recent-by-date (the supply loop).
-  for (let i = rows.length - 1; i >= 1 && offers.length < 24; i--) {
-    const c = rows[i].split("\t");
-    const t = Date.parse(c[1] || "");
-    if (Number.isFinite(t)) anyDated = true;
-    if (!Number.isFinite(t) || t < cutoff) continue;
-    const o = toOffer(c);
-    if (!o || seen.has(o.url)) continue;
-    seen.add(o.url);
-    offers.push(o);
-  }
-  // Fallback for LEGACY scan.mjs histories with no parseable first_seen (every row
-  // would be dropped → a false "all caught up"). Show the most-recent-by-append-order
-  // un-evaluated rows instead, so the supply loop still surfaces something.
-  if (offers.length === 0 && !anyDated) {
-    for (let i = rows.length - 1; i >= 1 && offers.length < 12; i--) {
-      const o = toOffer(rows[i].split("\t"));
-      if (!o || seen.has(o.url)) continue;
-      seen.add(o.url);
-      offers.push(o);
-    }
-  }
-  return Response.json({ offers, count: offers.length });
+  return Response.json(collectWhatsNew(rows, {
+    cutoff,
+    toOffer,
+    offerLimit: resolveOfferLimit(new URL(req.url).searchParams.get("limit")),
+  }));
 }

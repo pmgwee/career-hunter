@@ -168,9 +168,12 @@ test("isShellSafeCompanyName: refuses anything that could close the quote", () =
 
 /** The example row the evaluate prompt tells the agent to append. */
 function exampleTsvRow(prompt) {
-  const line = prompt.split("\n").find((l) => l.includes("\t"));
-  assert.ok(line, "the evaluate prompt must contain a literal tab-separated example row");
-  return line.trim().split("\t");
+  const lines = prompt.split("\n").filter((l) => l.includes("\t"));
+  assert.equal(lines.length, 2, "the evaluate prompt must contain a TSV header and one data row");
+  assert.deepEqual(lines[0].trim().split("\t"), [
+    "num", "date", "company", "role", "status", "score", "pdf", "report", "notes", "url",
+  ], "the header must name every field merge-tracker resolves");
+  return lines[1].trim().split("\t");
 }
 
 test("buildPrompt: the evaluate prompt's TSV row carries all 10 fields, url last", () => {
