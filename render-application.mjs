@@ -48,8 +48,11 @@ const DEFAULT_TITLES = {
   volunteering: 'Volunteering',
 };
 
+// ATS text layer (2026-10-16, candidate-approved fixes): "×" does not survive PDF text
+// extraction (it came out as "6�"), so it renders as a plain "x" everywhere.
 function escapeHtml(value) {
   return String(value ?? '')
+    .replace(/×/g, 'x')
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
@@ -87,6 +90,22 @@ function fillAll(template, substitutions) {
 
 // ── CV sections ─────────────────────────────────────────────────────────────
 
+// One date style across every section ("Mar 2024 - Aug 2024"). Payloads mix full and
+// short month names, which parsers and recruiters both read as inconsistency.
+const MONTHS = {
+  January: 'Jan', February: 'Feb', March: 'Mar', April: 'Apr', June: 'Jun', July: 'Jul',
+  August: 'Aug', September: 'Sep', Sept: 'Sep', October: 'Oct', November: 'Nov', December: 'Dec',
+};
+function normDates(value) {
+  return String(value ?? '').replace(/\b(January|February|March|April|June|July|August|September|Sept|October|November|December)\b/g, m => MONTHS[m]);
+}
+
+// Many ATS parsers read only visible text, so a "LinkedIn" label loses the URL. Show
+// the address itself (scheme, "www." and trailing slash dropped) as the link text.
+function linkLabel(url) {
+  return String(url || '').replace(/^https?:\/\//i, '').replace(/^www\./i, '').replace(/\/+$/, '');
+}
+
 function buildContactRow(candidate = {}) {
   const items = [];
   if (candidate.phone) {
@@ -98,7 +117,7 @@ function buildContactRow(candidate = {}) {
   for (const key of ['linkedin', 'github', 'portfolio']) {
     const link = candidate[key];
     const href = link && safeUrl(link.url);
-    if (href) items.push(`<a href="${href}">${escapeHtml(link.display || link.url)}</a>`);
+    if (href) items.push(`<a href="${href}">${escapeHtml(linkLabel(link.url))}</a>`);
   }
   // Location is deliberately the one non-link item, so it reads as a fact about
   // the candidate rather than something to click.
@@ -148,7 +167,7 @@ function buildExperience(entries) {
     return `<div class="job">
       <div class="job-header">
         <span class="job-company">${escapeHtml(e.company || '')}</span>
-        <span class="job-period">${escapeHtml(e.dates || '')}</span>
+        <span class="job-period">${escapeHtml(normDates(e.dates))}</span>
       </div>
       <div class="job-role">${escapeHtml(e.role || '')}</div>${location}${list}
     </div>`;
@@ -171,7 +190,7 @@ function buildEducation(entries) {
     return `<div class="edu-item">
       <div class="edu-header">
         <span class="edu-title">${escapeHtml(e.title || '')}${org}</span>
-        <span class="edu-year">${escapeHtml(e.year || '')}</span>
+        ${e.year ? `<span class="edu-year"><span class="edu-sep"> | </span>${escapeHtml(normDates(e.year))}</span>` : ''}
       </div>${detail}
     </div>`;
   }).join('\n    ');
@@ -208,7 +227,7 @@ function buildVolunteering(entries) {
     return `<div class="job volunteer-item">
       <div class="job-header">
         <span class="volunteer-title">${escapeHtml(e.title || '')}</span>
-        <span class="job-period">${escapeHtml(e.dates || '')}</span>
+        <span class="job-period">${escapeHtml(normDates(e.dates))}</span>
       </div>${list}
     </div>`;
   }).join('\n    ');
@@ -295,7 +314,7 @@ function renderCover(payload, template) {
   for (const key of ['portfolio', 'linkedin', 'github']) {
     const link = candidate[key];
     const href = link && safeUrl(link.url);
-    if (href) contactItems.push(`<a href="${href}">${escapeHtml(link.display || link.url)}</a>`);
+    if (href) contactItems.push(`<a href="${href}">${escapeHtml(linkLabel(link.url))}</a>`);
   }
   if (candidate.email) {
     contactItems.push(`<a href="mailto:${escapeHtml(candidate.email)}">${escapeHtml(candidate.email_display || candidate.email)}</a>`);

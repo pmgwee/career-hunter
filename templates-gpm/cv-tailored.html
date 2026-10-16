@@ -162,16 +162,15 @@
   /* === EDUCATION === */
   .edu-item { margin-bottom: 8px; }
 
-  .edu-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: baseline;
-    gap: 12px;
-  }
+  /* Dates sit inline after the degree, not in a right-aligned column: stacked
+     right-hand dates were extracted as a separate column and detached from their
+     degrees in the PDF text layer (ATS fix, 2026-10-16). */
+  .edu-header { display: block; }
 
   .edu-title { font-weight: 600; font-size: var(--font-size); color: #333; }
   .edu-org { color: var(--org-color); font-weight: 500; }
-  .edu-year { font-size: 10px; color: #777; white-space: nowrap; }
+  .edu-year { font-size: 10px; color: #777; }
+  .edu-sep { color: #bbb; }
   .edu-desc { font-size: 10px; color: #666; margin-top: 2px; line-height: 1.5; }
 
   /* === AWARDS === */
