@@ -3,6 +3,7 @@ import path from "node:path";
 
 import { parsePdfManifestRows } from "./apply/cv-selection.mjs";
 import { inlineDisposition } from "./content-disposition.mjs";
+import { classifyDocumentFilename } from "./document-metadata.mjs";
 
 export type DocumentKind = "cv" | "cover" | "unknown";
 
@@ -119,14 +120,7 @@ export function discoverDocuments(opts: DiscoverOptions): DiscoveredDocument[] {
     }
 
     // Fallback classification if manifest is missing or didn't have a kind
-    if (kind === "unknown") {
-      const name = filename.toLowerCase().replace(/\.pdf$/, "");
-      if (name.startsWith("cv-")) {
-        kind = "cv";
-      } else if (/^cover([-_]|$)/.test(name) || /[-_]cover$/.test(name)) {
-        kind = "cover";
-      }
-    }
+    if (kind === "unknown") kind = classifyDocumentFilename(filename);
 
     results.push({
       filename,

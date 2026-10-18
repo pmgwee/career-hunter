@@ -12,6 +12,16 @@ export function safeSnapshotPath(value) {
     && value.split("/").every((part) => part && part !== "." && part !== "..");
 }
 
+/** Child env for a snapshot read: every inherited CAREER_OPS_* override is
+ * dropped (canonical readers honor e.g. CAREER_OPS_PROFILE ahead of the data
+ * root, which would pull local files into cloud results), then the data root
+ * and tracker are bound to the snapshot directory.
+ * @param {string} root @param {NodeJS.ProcessEnv} [base] */
+export function snapshotEnv(root, base = process.env) {
+  const env = Object.fromEntries(Object.entries(base).filter(([key]) => !key.toUpperCase().startsWith("CAREER_OPS_")));
+  return { ...env, CAREER_OPS_ROOT: root, CAREER_OPS_DATA_DIR: root, CAREER_OPS_TRACKER: path.join(root, "data", "applications.md") };
+}
+
 /** Run an allowlisted, read-only canonical engine against an isolated cloud
  * snapshot. No process-global data-root change, local fallback or cloud write.
  * File arguments are resolved only inside this request's temporary directory.
@@ -34,8 +44,7 @@ export async function runReadonlyCore({ files, codeRoot, script, args = [] }) {
     const result = await new Promise((resolve) => {
       execFile(process.execPath, argv, {
         cwd: codeRoot, timeout: 25_000, maxBuffer: 8 << 20, windowsHide: true,
-        env: { ...process.env, CAREER_OPS_ROOT: root, CAREER_OPS_DATA_DIR: root,
-          CAREER_OPS_TRACKER: path.join(root, "data", "applications.md") },
+        env: snapshotEnv(root),
       }, (error, stdout, stderr) => resolve({ error, stdout, stderr }));
     });
     return { data: parseCliJson(result.stdout), failed: Boolean(result.error), noKeywords: /keywords extracted/i.test(result.stderr) };

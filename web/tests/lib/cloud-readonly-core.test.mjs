@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { runReadonlyCore, safeSnapshotPath } from "../../src/lib/workspace/readonly-core.mjs";
+import { runReadonlyCore, safeSnapshotPath, snapshotEnv } from "../../src/lib/workspace/readonly-core.mjs";
 
 test("cloud snapshots reject escapes and writable engines", async () => {
   for (const value of ["../cv.md", "/cv.md", "C:/cv.md", "data/../cv.md", "data\\cv.md", "data//cv.md", "a\0b"])
@@ -19,4 +19,16 @@ test("canonical stats read only the supplied cloud tracker, never local applicat
   assert.equal(result.failed, false);
   assert.equal(result.data.tracker.total, 1);
   assert.equal(files.get("data/applications.md"), tracker);
+});
+
+test("snapshot env drops inherited CAREER_OPS overrides so no local file leaks into cloud reads", () => {
+  const base = { PATH: "/bin", CAREER_OPS_PROFILE: "C:/local/profile.yml", CAREER_OPS_PORTALS: "C:/local/portals.yml",
+    CAREER_OPS_REPORTS_DIR: "C:/local/reports", CAREER_OPS_CV: "C:/local/cv.md", CAREER_OPS_ROOT: "C:/local" };
+  const env = snapshotEnv("/tmp/snap", base);
+  assert.equal(env.PATH, "/bin");
+  for (const key of ["CAREER_OPS_PROFILE", "CAREER_OPS_PORTALS", "CAREER_OPS_REPORTS_DIR", "CAREER_OPS_CV"])
+    assert.equal(env[key], undefined, key);
+  assert.equal(env.CAREER_OPS_ROOT, "/tmp/snap");
+  assert.equal(env.CAREER_OPS_DATA_DIR, "/tmp/snap");
+  assert.equal(env.CAREER_OPS_TRACKER, path.join("/tmp/snap", "data", "applications.md"));
 });

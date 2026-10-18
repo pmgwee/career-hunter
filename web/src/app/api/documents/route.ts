@@ -2,12 +2,15 @@ import path from "node:path";
 import { createClient } from "@/lib/supabase/server";
 import { loadCareerWorkspace } from "@/lib/workspace/snapshot";
 import { inlineDisposition } from "@/lib/content-disposition.mjs";
+import { cloudDocumentMetadata } from "@/lib/document-metadata.mjs";
+
+const PDF_MANIFEST = "data/pdf-index.tsv";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 export async function GET(req: Request) {
-  const snapshot = await loadCareerWorkspace();
+  const snapshot = await loadCareerWorkspace({ includeFilePaths: [PDF_MANIFEST] });
   const supabase = await createClient();
   const id = new URL(req.url).searchParams.get("id");
   const query = () => supabase.from("career_artifacts")
@@ -24,9 +27,9 @@ export async function GET(req: Request) {
   }
   const { data, error } = await query().eq("mime_type","application/pdf");
   if (error) return Response.json({error:"Documents unavailable"},{status:503});
+  const manifest = snapshot.files.get(PDF_MANIFEST) ?? "";
   return Response.json(data.map(row => ({
     id:row.id,filename:path.posix.basename(row.path),
-    kind:/cover/i.test(row.path)?"cover":/cv|resume/i.test(row.path)?"cv":"unknown",
-    date:row.updated_at.slice(0,10),reportId:null,format:"pdf",mtimeMs:Date.parse(row.updated_at),
+    ...cloudDocumentMetadata(row, manifest),mtimeMs:Date.parse(row.updated_at),
   })));
 }

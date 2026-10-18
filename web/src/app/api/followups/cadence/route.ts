@@ -4,6 +4,7 @@ import { PROFILE_CADENCE_KEYS, type ProfileCadenceKey } from "@/lib/followups";
 import { loadCareerWorkspace } from "@/lib/workspace/snapshot";
 import { writeWorkspaceFiles } from "@/lib/workspace/write-files";
 import { readJsonObject } from "@/lib/json-body";
+import { followupsEnabledFromProfile } from "@/lib/followups-setting.mjs";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -43,7 +44,8 @@ export async function GET() {
   }
   const defaults = webDefaults();
   const overrides = profileOverrides(profile);
-  return Response.json({ defaults, defaultsAvailable: true, overrides, effective: { ...defaults, ...overrides } });
+  const enabled = followupsEnabledFromProfile(profile);
+  return Response.json({ defaults, defaultsAvailable: true, overrides, effective: { ...defaults, ...overrides }, enabled });
 }
 
 export async function POST(req: Request) {
@@ -59,7 +61,13 @@ export async function POST(req: Request) {
     }
     cadence[key] = Number.parseInt(raw, 10);
   }
-  if (Object.keys(cadence).length === 0) return Response.json({ error: "nothing to write" }, { status: 400 });
+  if (body.enabled !== undefined && typeof body.enabled !== "boolean") {
+    return Response.json({ error: "enabled must be true or false" }, { status: 400 });
+  }
+  const enabled = body.enabled as boolean | undefined;
+  if (Object.keys(cadence).length === 0 && enabled === undefined) {
+    return Response.json({ error: "nothing to write" }, { status: 400 });
+  }
 
   const snapshot = await loadCareerWorkspace({ includeFilePaths: ["config/profile.yml"] });
   const existing = snapshot.files.get("config/profile.yml") ?? "";
@@ -76,10 +84,13 @@ export async function POST(req: Request) {
       { status: 409 },
     );
   }
-  const merged = {
-    ...base,
-    followup_cadence: { ...(isObj(base.followup_cadence) ? base.followup_cadence : {}), ...cadence },
-  };
+  const merged: Record<string, unknown> = { ...base };
+  if (Object.keys(cadence).length > 0) {
+    merged.followup_cadence = { ...(isObj(base.followup_cadence) ? base.followup_cadence : {}), ...cadence };
+  }
+  if (enabled !== undefined) {
+    merged.follow_ups = { ...(isObj(base.follow_ups) ? base.follow_ups : {}), enabled };
+  }
   try {
     await writeWorkspaceFiles(snapshot, [
       {
@@ -91,5 +102,5 @@ export async function POST(req: Request) {
   } catch (error) {
     return Response.json({ error: error instanceof Error ? error.message : "write failed" }, { status: 500 });
   }
-  return Response.json({ ok: true, followup_cadence: merged.followup_cadence });
+  return Response.json({ ok: true, followup_cadence: merged.followup_cadence, enabled: followupsEnabledFromProfile(merged) });
 }

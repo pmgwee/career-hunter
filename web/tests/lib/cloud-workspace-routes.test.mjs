@@ -99,3 +99,27 @@ test("cloud documents scope queries to the authenticated workspace and private P
   assert.equal(downloads.length,1);
   assert.equal(state.writes.length,0);
 });
+test("cloud document list classifies from the synced PDF manifest, not substrings", async () => {
+  const state=fixture();
+  state.snapshot.files.set("data/pdf-index.tsv","021\toutput/cv-discovery.pdf\t\tpdf\t2026-09-30\tcv\n");
+  const rows=[{id:"a",path:"output/cv-discovery.pdf",object_name:"fixture/a.pdf",mime_type:"application/pdf",updated_at:"2026-10-18T00:00:00Z"},
+    {id:"b",path:"output/recovery-notes.pdf",object_name:"fixture/b.pdf",mime_type:"application/pdf",updated_at:"2026-10-17T00:00:00Z"}];
+  const query={select(){return this},eq(){return this},is(){return this},then(resolve){resolve({data:rows,error:null})}};
+  state.supabase={from(){return query}};
+  const list=await (await readDocuments(new Request("https://fixture.invalid/api/documents"))).json();
+  assert.deepEqual(list.map(({kind,reportId,date})=>({kind,reportId,date})),
+    [{kind:"cv",reportId:"021",date:"2026-09-30"},{kind:"unknown",reportId:null,date:"2026-10-17"}]);
+  assert.equal(state.writes.length,0);
+});
+test("cloud follow-up toggle writes follow_ups.enabled and reports it back", async () => {
+  const { GET: readCadence } = await import("../../src/app/api/followups/cadence/route.ts");
+  const state=fixture("candidate:\n  name: Fixture\n");
+  assert.equal((await readCadence()).status,200);
+  assert.equal((await (await readCadence()).json()).enabled,true);
+  assert.equal((await cadence(request({enabled:"no"}))).status,400);
+  assert.equal(state.writes.length,0);
+  assert.equal((await cadence(request({enabled:false}))).status,200);
+  assert.deepEqual(yaml.load(state.writes[0].content),{candidate:{name:"Fixture"},follow_ups:{enabled:false}});
+  state.snapshot.files.set("config/profile.yml",state.writes[0].content);
+  assert.equal((await (await readCadence()).json()).enabled,false);
+});
