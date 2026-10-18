@@ -3,6 +3,7 @@ import { DEFAULT_CADENCE } from "../../../../../../followup-cadence.mjs";
 import { PROFILE_CADENCE_KEYS, type ProfileCadenceKey } from "@/lib/followups";
 import { loadCareerWorkspace } from "@/lib/workspace/snapshot";
 import { writeWorkspaceFiles } from "@/lib/workspace/write-files";
+import { readJsonObject } from "@/lib/json-body";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -46,12 +47,8 @@ export async function GET() {
 }
 
 export async function POST(req: Request) {
-  let body: Record<string, unknown>;
-  try {
-    body = (await req.json()) as Record<string, unknown>;
-  } catch {
-    return Response.json({ error: "bad json" }, { status: 400 });
-  }
+  const body = await readJsonObject<Record<string, unknown>>(req);
+  if (!body) return Response.json({ error: "bad json" }, { status: 400 });
 
   const cadence: Partial<Record<ProfileCadenceKey, number>> = {};
   for (const key of PROFILE_CADENCE_KEYS) {
@@ -69,6 +66,9 @@ export async function POST(req: Request) {
   let base: Record<string, unknown> = {};
   try {
     const parsed = yaml.load(existing);
+    if (!isObj(parsed) && snapshot.files.has("config/profile.yml")) {
+      return Response.json({ error: "config/profile.yml is not a mapping — refusing to overwrite it." }, { status: 409 });
+    }
     base = isObj(parsed) ? parsed : {};
   } catch {
     return Response.json(

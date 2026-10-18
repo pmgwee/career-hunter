@@ -5,6 +5,12 @@ const nextConfig = {
   // The spawned root scanner imports js-yaml outside the Next bundle. Trace
   // its web-installed package and the preload that resolves it at runtime.
   outputFileTracingIncludes: {
+    "/analytics": ["../funnel-stages.mjs"],
+    "/api/*": [
+      "../*.mjs", "../lib/**/*", "../providers/**/*", "../templates/**/*.yml",
+      "../tracker-aliases.json", "./src/lib/core/scanner-preload.mjs",
+      "./src/lib/core/scanner-resolve.mjs", "./node_modules/js-yaml/**/*",
+    ],
     "/api/explore": [
       "./src/lib/core/scanner-preload.mjs",
       "./src/lib/core/scanner-resolve.mjs",

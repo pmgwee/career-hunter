@@ -33,7 +33,9 @@
     "**/*.ts",
     "**/*.tsx",
     ".next/types/**/*.ts",
-    ".next/dev/types/**/*.ts"
+    ".next/dev/types/**/*.ts",
+    ".next-upgrade-cloud-v137/types/**/*.ts",
+    ".next-upgrade-cloud-v137/dev/types/**/*.ts"
   ],
   "exclude": [
     "node_modules"

@@ -4,6 +4,7 @@ import { canonicalizeStatus } from "@/lib/core/states";
 import { detectColumnMap } from "@/lib/tracker-table.mjs";
 import { createClient } from "@/lib/supabase/server";
 import { loadCareerWorkspace } from "@/lib/workspace/snapshot";
+import { readJsonObject } from "@/lib/json-body";
 
 export const runtime = "nodejs";
 
@@ -41,12 +42,8 @@ function updateStatus(markdown: string, rowNumber: string, status: string, alias
 }
 
 export async function POST(request: Request) {
-  let body: { n?: unknown; status?: unknown };
-  try {
-    body = await request.json();
-  } catch {
-    return NextResponse.json({ error: "bad json" }, { status: 400 });
-  }
+  const body = await readJsonObject<{ n?: unknown; status?: unknown }>(request);
+  if (!body) return NextResponse.json({ error: "bad json" }, { status: 400 });
   const rowNumber = typeof body.n === "string" && /^\d+$/.test(body.n) ? body.n : "";
   const requested = typeof body.status === "string" ? body.status.trim() : "";
   if (!rowNumber || !requested || /[|\r\n*]/.test(requested)) {

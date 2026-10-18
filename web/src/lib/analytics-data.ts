@@ -12,6 +12,7 @@ export type AnalyticsApplication = Application & {
 // Keep suffixes token-bound so a requisition such as `340741BR` cannot be
 // misread as `340741B` (the same false-positive guard as the TUI parser).
 const MONEY = /(?:[$€£¥₹₺₩]|USD|EUR|GBP|PLN|CHF|SGD|AUD|CAD)?\s*(\d[\d,]*(?:\.\d+)?)\s*([KkMmBb])?(?![A-Za-z])(?:\s*[-–]\s*(?:[$€£¥₹₺₩]|USD|EUR|GBP|PLN|CHF|SGD|AUD|CAD)?\s*(\d[\d,]*(?:\.\d+)?)\s*([KkMmBb])?(?![A-Za-z]))?/g;
+const NON_USD_CURRENCY = /(?:€|£|¥|₹|₺|₩|\b(?:EUR|GBP|PLN|CHF|SGD|AUD|CAD)\b)/i;
 
 function scalar(source: string, key: string): string {
   const match = source.match(new RegExp(`^${key}:\\s*(.+)$`, "im"));
@@ -28,21 +29,18 @@ function moneyNumber(value: string, suffix = ""): number {
   return numeric;
 }
 
-function highestMoney(text: string, allowBare = false): { value: number; source: "POSTED" | "est" | "" } {
+function highestMoney(text: string): { value: number; source: "POSTED" | "est" | "" } {
   let highest = 0;
   let source: "POSTED" | "est" | "" = "";
   for (const match of text.matchAll(MONEY)) {
-    const hasCurrency = Boolean(match[0].match(/[$€£¥₹₺₩]|\b(?:USD|EUR|GBP|PLN|CHF|SGD|AUD|CAD)\b/));
-    const hasCurrencyOrSuffix = Boolean(match[0].match(/[$€£¥₹₺₩]|\b(?:USD|EUR|GBP|PLN|CHF|SGD|AUD|CAD)\b|[KkMmBb]/));
-    if (!allowBare && !hasCurrencyOrSuffix) continue;
+    const before = text.slice(Math.max(0, (match.index ?? 0) - 8), match.index ?? 0);
+    const after = text.slice((match.index ?? 0) + match[0].length, (match.index ?? 0) + match[0].length + 8);
+    if (NON_USD_CURRENCY.test(before) || NON_USD_CURRENCY.test(after)) continue;
+    const hasCurrency = /\$|\bUSD\b/i.test(match[0]) || /^\s*USD\b/i.test(after);
+    if (!hasCurrency) continue;
     const value = Math.max(moneyNumber(match[1], match[2]), moneyNumber(match[3] ?? "0", match[4] ?? ""));
-    const after = text.slice((match.index ?? 0) + match[0].length);
-    if (/^\s*(?:valuation|(?:total\s+)?raised|series\s|round\b)/i.test(after)) continue;
-    // Bare M/B values in prose are usually company scale or valuation, not
-    // compensation (for example, "1,079.2M devices"). Keep currency-backed
-    // values, but do not let those metrics become a salary datapoint.
-    if (!hasCurrency && /[MmBb]/.test(`${match[2] ?? ""}${match[4] ?? ""}`)) continue;
-    if (!hasCurrency && value > 500_000) continue;
+    const trailingText = text.slice((match.index ?? 0) + match[0].length);
+    if (/^\s*(?:valuation|(?:total\s+)?raised|series\s|round\b)/i.test(trailingText)) continue;
     if (value > highest) {
       highest = value;
       const context = text.slice(Math.max(0, (match.index ?? 0) - 24), Math.min(text.length, (match.index ?? 0) + match[0].length + 40)).toLowerCase();
@@ -69,46 +67,52 @@ function normalizeWorkMode(raw: string, text: string): string {
 }
 
 function fallbackLocation(text: string): string {
-  const cityState = text.match(/\b([A-Z][A-Za-z.'-]+(?: [A-Z][A-Za-z.'-]+){0,2}),? (?:A[KLRZ]|C[AOT]|D[CE]|FL|GA|HI|I[ADLN]|K[SY]|LA|M[ADEINOST]|N[CDEHJMVY]|O[HKR]|PA|RI|S[CD]|T[NX]|UT|V[AT]|W[AIVY])\b/);
-  if (cityState?.[1]) return cityState[1];
+  // Require the comma for US city/state pairs. Free-form notes often contain
+  // uppercase prose such as "BEST TECHNICAL FIT IN THE PIPELINE"; accepting
+  // a bare `City ST` shape turns "Best Technical Fit IN" into Indiana.
+  const cityState = text.match(/\b([A-Z][A-Za-z.'-]+(?: [A-Z][A-Za-z.'-]+){0,2}),\s*(?:A[KLRZ]|C[AOT]|D[CE]|FL|GA|HI|I[ADLN]|K[SY]|LA|M[ADEINOST]|N[CDEHJMVY]|O[HKR]|PA|RI|S[CD]|T[NX]|UT|V[AT]|W[AIVY])\b/);
+  if (cityState?.[1] && !(cityState[1].length <= 3 && cityState[1] === cityState[1].toUpperCase())) return cityState[1];
   const cities = text.match(/\b(Porto|Lisbon|London|Berlin|Munich|München|Hamburg|Frankfurt|Cologne|Düsseldorf|Dusseldorf|Stuttgart|Zurich|Zürich|Geneva|Lausanne|Basel|Dublin|Cork|Amsterdam|Rotterdam|Eindhoven|Utrecht|Paris|Lyon|Madrid|Barcelona|Valencia|Stockholm|Gothenburg|Malmö|Malmo|Copenhagen|Oslo|Helsinki|Milan|Rome|Turin|Vienna|Brussels|Ghent|Antwerp|Luxembourg|Warsaw|Kraków|Krakow|Wrocław|Wroclaw|Tallinn|Riga|Vilnius|Prague|Brno|Budapest|Bucharest|Sofia|Athens|Bengaluru|Bangalore|Singapore|Sydney|Toronto|Vancouver|Tel Aviv|São Paulo|Sao Paulo|Kuala Lumpur|Petaling Jaya|Cyberjaya)\b/i);
   return cities?.[1] ?? "";
 }
 
-function reportFields(content: string, fallbackArchetype: string) {
+function reportArchetype(content: string, fallbackArchetype: string): string {
   const meta = parseReport(content);
   const machine = content.match(/##\s+Machine Summary[\s\S]*?```(?:yaml)?\s*([\s\S]*?)```/i)?.[1] ?? content;
   const archetypeTable = content.match(/\*\*(?:Archetype detected|Archetype)\*\*\s*\|\s*([^|\n]+)/i)?.[1]?.replace(/\*+/g, "").trim() ?? "";
-  const archetype = scalar(machine, "archetype_primary") || scalar(machine, "archetype") || archetypeTable || meta.fields.find((field) => field.label === "Archetype")?.value || fallbackArchetype;
-  const explicitLocation = /\|\s*Location(?:s)?(?: field)?\s*\|\s*([^|\n]+)/i.exec(content)?.[1]?.trim()
-    ?? /\*\*Location\*\*\s*[:|]\s*([^|\n]+)/i.exec(content)?.[1]?.trim()
-    ?? "";
-  const location = scalar(machine, "location") || explicitLocation || fallbackLocation(content);
-  const workMode = normalizeWorkMode(scalar(machine, "work_mode"), "");
-  const compensation = [scalar(machine, "advertised_comp"), scalar(machine, "comp_estimate_myr_month"), scalar(machine, "compensation")].filter(Boolean).join(" ");
-  const pay = highestMoney(compensation, true);
-  return { archetype, location, workMode, payMax: pay.value, paySource: pay.source };
+  return scalar(machine, "archetype_primary") || scalar(machine, "archetype") || archetypeTable || meta.fields.find((field) => field.label === "Archetype")?.value || fallbackArchetype;
 }
 
-function fromApplication(app: Application, cloudReports?: ReadonlyMap<string, { content: string }>): AnalyticsApplication {
-  const report = cloudReports?.get(app.n) ?? readReport(app.n);
+/** Read-only Search stats display metadata, not a second lifecycle engine.
+ * Unlike the Go TUI's general-purpose note enrichment, these USD-only charts
+ * require explicit work-mode evidence and must not guess on-site from a city.
+ * Keep those reviewed evidence/unit boundaries here until the core exposes
+ * an equivalent row-metadata contract; statuses and history remain core-owned.
+ */
+export function enrichAnalyticsApplication(app: Application, reportContent = ""): AnalyticsApplication {
   const notes = app.notes ?? "";
-  const content = report?.content ?? "";
-  const derived = reportFields(content, "");
   const notePay = highestMoney(notes);
   const combinedText = `${app.role} ${notes}`;
-  const noteLocation = fallbackLocation(`${app.role} ${notes}`);
+  const noteLocation = fallbackLocation(notes);
   return {
     ...app,
-    archetype: derived.archetype,
-    location: derived.location || noteLocation,
-    workMode: derived.workMode || normalizeWorkMode("", combinedText) || (noteLocation ? "Full" : ""),
-    payMax: notePay.value || derived.payMax,
-    paySource: notePay.value ? notePay.source : derived.paySource,
+    archetype: reportArchetype(reportContent, ""),
+    location: noteLocation,
+    workMode: normalizeWorkMode("", combinedText),
+    payMax: notePay.value,
+    paySource: notePay.source,
   };
+}
+
+function fromApplication(app: Application): AnalyticsApplication {
+  return enrichAnalyticsApplication(app, readReport(app.n)?.content ?? "");
 }
 
 /** Read-only enrichment of tracker rows for Analytics. */
 export function analyticsApplications(applications: Application[], cloudReports?: ReadonlyMap<string, { content: string }>): AnalyticsApplication[] {
-  return applications.map((application) => fromApplication(application, cloudReports));
+  // A supplied cloud map is authoritative, including missing reports. Never
+  // fall back to another user's local filesystem when a cloud file is absent.
+  return applications.map((app) => cloudReports
+    ? enrichAnalyticsApplication(app, cloudReports.get(app.n)?.content ?? "")
+    : fromApplication(app));
 }

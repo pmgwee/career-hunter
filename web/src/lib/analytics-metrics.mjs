@@ -1,6 +1,6 @@
 import { canonStatus } from "./status-alias.mjs";
 
-const STAGE_ORDER = ["EVALUATED", "APPLIED", "RESPONDED", "ASSESSMENT", "INTERVIEW", "OFFER"];
+const STAGE_ORDER = ["TRACKED", "APPLIED", "RESPONDED", "INTERVIEW", "OFFER"];
 const SCORE_BUCKETS = [
   { label: "4.5–5.0", min: 4.5, max: Infinity },
   { label: "4.0–4.4", min: 4, max: 4.5 },
@@ -23,6 +23,10 @@ function normalizedStatus(value) {
   return canonStatus(String(value ?? ""));
 }
 
+// Same set as stats.mjs ACTIVE_STATUSES: applications in flight. Evaluated
+// rows were never sent and Hired is finished, so neither is active.
+const ACTIVE_STATUSES = new Set(["APPLIED", "RESPONDED", "ASSESSMENT", "INTERVIEW", "OFFER"]);
+
 function sortByCountThenLabel(a, b) {
   return b.count - a.count || a.label.localeCompare(b.label);
 }
@@ -31,7 +35,7 @@ function sortByCountThenLabel(a, b) {
  * Port of dashboard/internal/data/career.go's cumulative funnel semantics.
  * The returned object is pure so it can be parity-tested without filesystem IO.
  */
-export function computeProgressMetrics(applications = []) {
+export function computeProgressMetrics(applications = [], achievements) {
   const apps = Array.isArray(applications) ? applications : [];
   const statusCounts = new Map();
   const scores = [];
@@ -50,23 +54,27 @@ export function computeProgressMetrics(applications = []) {
       topScore = Math.max(topScore, score);
     }
     if (status === "OFFER" || status === "HIRED") totalOffers += 1;
-    if (!["SKIP", "REJECTED", "DISCARDED"].includes(status)) activeApps += 1;
+    if (ACTIVE_STATUSES.has(status)) activeApps += 1;
   }
 
   const count = (status) => statusCounts.get(status) ?? 0;
-  const evaluated = apps.length;
-  const applied = count("APPLIED") + count("RESPONDED") + count("ASSESSMENT") + count("INTERVIEW") + count("OFFER") + count("HIRED") + count("REJECTED");
-  const responded = count("RESPONDED") + count("ASSESSMENT") + count("INTERVIEW") + count("OFFER") + count("HIRED");
-  const assessment = count("ASSESSMENT") + count("INTERVIEW") + count("OFFER") + count("HIRED");
-  const interview = count("INTERVIEW") + count("OFFER") + count("HIRED");
-  const offer = count("OFFER") + count("HIRED");
-  const funnelCounts = [evaluated, applied, responded, assessment, interview, offer];
+  // Tracked is the inventory of every tracker row, including SKIP, as in the
+  // Go dashboard. SKIP is not an applied/active stage; do not silently change
+  // this denominator into an eligible-to-apply subset.
+  const tracked = apps.length;
+  const applied = achievements?.applied ?? count("APPLIED") + count("RESPONDED") + count("ASSESSMENT") + count("INTERVIEW") + count("OFFER") + count("HIRED") + count("REJECTED");
+  const responded = achievements?.responded ?? count("RESPONDED") + count("ASSESSMENT") + count("INTERVIEW") + count("OFFER") + count("HIRED") + count("REJECTED");
+  // Upstream's ledger-aware core helper recovers prior interview/offer stages
+  // for applications that are now rejected or discarded.
+  const interview = achievements?.interviews ?? count("INTERVIEW") + count("OFFER") + count("HIRED");
+  const offer = achievements?.offers ?? count("OFFER") + count("HIRED");
+  const funnelCounts = [tracked, applied, responded, interview, offer];
 
   const funnel = STAGE_ORDER.map((label, index) => {
     const stageCount = funnelCounts[index];
-    // TUI semantics: Evaluated and Applied are measured against the full
-    // evaluated population; downstream stages use Applied as the denominator.
-    const denominator = index <= 1 ? evaluated : applied;
+    // TUI semantics: Tracked and Applied are measured against all tracker rows;
+    // downstream stages use Applied as the denominator.
+    const denominator = index <= 1 ? tracked : applied;
     return { label: label[0] + label.slice(1).toLowerCase(), count: stageCount, pct: percentage(stageCount, denominator) };
   });
 
@@ -95,11 +103,11 @@ export function computeProgressMetrics(applications = []) {
     .map(([week, count]) => ({ week, shortWeek: week.slice(5), count }));
 
   return {
-    evaluated,
+    tracked,
     avgScore: scores.length ? totalScore / scores.length : 0,
     topScore,
     activeApps,
-    totalOffers,
+    totalOffers: achievements?.offers ?? totalOffers,
     funnel,
     scoreDistribution,
     responseRate: percentage(responded, applied),
@@ -109,9 +117,11 @@ export function computeProgressMetrics(applications = []) {
   };
 }
 
-export function resolveAnalyticsTab(raw) {
-  const value = Array.isArray(raw) ? raw[0] : raw;
-  return value === "search-stats" ? "search-stats" : "progress";
+/** Match main's URL-driven views; unknown/missing values keep Progress useful. */
+export function resolveAnalyticsView(raw, legacyTab) {
+  const selected = raw ?? legacyTab;
+  const value = Array.isArray(selected) ? selected[0] : selected;
+  return value === "search-stats" || value === "insights" ? value : "progress";
 }
 
 function isoWeek(date) {
@@ -136,7 +146,7 @@ export function canonicalizeArchetype(raw) {
   if (value.includes("transformation") || value.includes("strategy") || value.includes("consultant") || value.includes("governance") || value.includes("policy")) return "AI Transformation & Governance";
   if (value.includes("product") || value.includes("project") || value.includes("program") || value.includes("pm") || value.includes("projektkoordin")) return "Product & Program Mgmt";
   if (value.includes("data") || value.includes("analytics") || value.includes("business intelligence")) return "Data & Analytics";
-  if (value.includes("support") || value.includes("helpdesk") || value.includes("service desk") || value.includes("customer service") || value.includes("onboarding") || value.includes("administrator") || value.includes("operations") || value.includes("admin")) return "IT & Technical Operations";
+  if (value.includes("support") || value.includes("helpdesk") || value.includes("service desk") || value.includes("customer service") || value.includes("onboarding") || value.includes("administrator") || value.includes("operations") || /\badmin\b/.test(value)) return "IT & Technical Operations";
   if (value.includes("research") || value.includes("wissenschaft") || value.includes("universit") || value.includes("bildung")) return "Research & Academia";
   return "Other / Cross-Functional";
 }
@@ -173,7 +183,8 @@ export function canonicalizeLocation(raw) {
   // Collapse known city variants ("Singapore, On-site", state/province
   // suffixes, and country-qualified labels) into the same TUI bucket.
   if (aliases[first]) return city;
-  if (["Req", "Job", "Id", "User", "Applicant"].some((bad) => city.toLowerCase().startsWith(bad.toLowerCase()))) return "";
+  // Whole words only: a prefix test also threw away real places like "Idaho Falls".
+  if (/^(?:req|requisition|jobs?|id|users?|applicants?)\b/i.test(city)) return "";
   if (parts.length === 1) {
     return city;
   }

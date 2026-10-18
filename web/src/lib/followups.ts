@@ -76,6 +76,8 @@ export type CadenceResponse = {
   metadata: CadenceMetadata | null;
   entries: CadenceEntry[];
   cadenceConfig?: Record<string, number> | null;
+  upcoming?: CadenceEntry[];
+  followupsEnabled?: boolean;
 };
 
 export type Urgency = "urgent" | "overdue" | "waiting" | "cold";

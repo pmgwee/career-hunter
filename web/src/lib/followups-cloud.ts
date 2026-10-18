@@ -1,6 +1,9 @@
 import "server-only";
 
 import path from "node:path";
+import * as yaml from "js-yaml";
+import { followupsEnabledFromProfile } from "@/lib/followups-setting.mjs";
+import { selectUpcomingFollowups } from "@/lib/core/followup-view.mjs";
 import { analyzeFromContent } from "../../../followup-cadence.mjs";
 import type { CadenceEntry, CadenceMetadata, CadenceResponse } from "@/lib/followups";
 import { loadCareerWorkspace } from "@/lib/workspace/snapshot";
@@ -10,6 +13,7 @@ type CadenceAnalysis = {
   metadata?: CadenceMetadata;
   entries?: CadenceEntry[];
   cadenceConfig?: Record<string, number>;
+  followupsEnabled?: boolean;
 };
 
 function linkedReportPath(reportField: string): string | null {
@@ -29,6 +33,7 @@ export async function loadFollowupsResponse(full = true): Promise<CadenceRespons
     snapshot.files.get("data/follow-ups.md") ?? "",
     {
       profileContent: snapshot.files.get("config/profile.yml") ?? "",
+      enabled: followupsEnabledFromProfile(yaml.load(snapshot.files.get("config/profile.yml") || "{}")),
       resolveReportPath: linkedReportPath,
     },
   ) as CadenceAnalysis;
@@ -43,6 +48,8 @@ export async function loadFollowupsResponse(full = true): Promise<CadenceRespons
       metadata: analysis.metadata,
       entries,
       cadenceConfig: analysis.cadenceConfig ?? null,
+      followupsEnabled: analysis.followupsEnabled !== false,
+      upcoming: selectUpcomingFollowups(entries),
     };
   }
   const priority = entries

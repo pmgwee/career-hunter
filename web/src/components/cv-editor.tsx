@@ -1,17 +1,30 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import ReactMarkdown from "react-markdown";
+import { SkillGaps } from "@/components/skill-gaps";
 import remarkGfm from "remark-gfm";
 import { Check, Loader2 } from "lucide-react";
 import { cn } from "@/lib/cn";
 
-export function CvEditor({ initialContent, initialExists }: { initialContent: string; initialExists: boolean }) {
-  const [content, setContent] = useState(initialContent);
-  const [exists, setExists] = useState(initialExists);
+export function CvEditor({ initialContent, initialExists }: { initialContent?: string; initialExists?: boolean }) {
+  const [content, setContent] = useState(initialContent ?? "");
+  const [loaded, setLoaded] = useState(initialContent !== undefined);
+  const [exists, setExists] = useState(initialExists ?? true);
   const [dirty, setDirty] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+
+  useEffect(() => {
+    if (initialContent !== undefined) return;
+    fetch("/api/cv")
+      .then((r) => r.json())
+      .then((d) => {
+        setContent(d.content ?? "");
+        setExists(d.exists ?? false);
+      })
+      .finally(() => setLoaded(true));
+  }, [initialContent]);
 
   async function save() {
     setSaving(true);
@@ -26,6 +39,11 @@ export function CvEditor({ initialContent, initialExists }: { initialContent: st
         setExists(true);
         setSaved(true);
         setTimeout(() => setSaved(false), 2000);
+        // The skill-gap panel below reads cv.md to subtract skills the user
+        // already has, so a save changes its answer. Announced rather than
+        // wired directly, following the co-job-done convention, so the panel
+        // stays a listener and this stays a save.
+        window.dispatchEvent(new CustomEvent("co-cv-saved"));
       }
     } finally {
       setSaving(false);
@@ -39,7 +57,7 @@ export function CvEditor({ initialContent, initialExists }: { initialContent: st
           <h1 className="font-display text-2xl tracking-tight text-landing">CV editor</h1>
           <p className="mt-1 text-sm text-muted">
             Edit <code className="text-foreground">cv.md</code> with live preview.
-            {!exists && <span className="ml-1 text-faint">No cv.md yet — start typing to create it.</span>}
+            {!exists && loaded && <span className="ml-1 text-faint">No cv.md yet — start typing to create it.</span>}
           </p>
         </div>
         <button
@@ -58,7 +76,10 @@ export function CvEditor({ initialContent, initialExists }: { initialContent: st
         </button>
       </div>
 
-      <div className="mt-6 grid gap-4 lg:grid-cols-2">
+      {!loaded ? (
+        <div className="mt-6 text-sm text-muted">Loading…</div>
+      ) : (
+        <div className="mt-6 grid gap-4 lg:grid-cols-2">
           <textarea
             value={content}
             onChange={(e) => {
@@ -76,7 +97,12 @@ export function CvEditor({ initialContent, initialExists }: { initialContent: st
               <p className="text-muted">Preview appears here.</p>
             )}
           </article>
-      </div>
+        </div>
+      )}
+
+      {/* Below the editor: the gaps are context for what to write next, and they
+          belong after the document rather than competing with it. */}
+      <SkillGaps />
     </div>
   );
 }

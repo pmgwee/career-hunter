@@ -1,11 +1,14 @@
 import type { Metadata, Viewport } from "next";
+import { connection } from "next/server";
 import { inter, instrumentSerif, instrumentSerifItalic } from "@/lib/fonts";
 import { AppShell } from "@/components/app-shell";
+import { RouteProgressHost } from "@/components/route-progress-host";
+import { ThemeProvider } from "@/components/theme-provider";
 import "./globals.css";
 
 export const metadata: Metadata = {
   title: "career-ops — official web experience",
-  description: "Your private, synchronized career-ops dashboard.",
+  description: "The official, local-first web experience for career-ops.",
   // Home-screen / standalone (iOS): let our theme-color flow up to the status bar
   // + Dynamic Island; safe-area insets handle the layout.
   appleWebApp: { capable: true, statusBarStyle: "black-translucent", title: "career-ops" },
@@ -25,7 +28,11 @@ export const viewport: Viewport = {
 // jarring light seam. Matches --bg (light #f7f6f3 / dark #0a0a0a).
 const THEME_SCRIPT = `(function(){try{var t=localStorage.getItem('career-ops:theme');var s=t==='light'||t==='dark'?t:null;var d=s==='dark'||(!s&&window.matchMedia('(prefers-color-scheme: dark)').matches);if(d)document.documentElement.classList.add('dark');var m=document.querySelector('meta[name="theme-color"]');if(!m){m=document.createElement('meta');m.setAttribute('name','theme-color');document.head.appendChild(m);}m.setAttribute('content',d?'#0a0a0a':'#f7f6f3');}catch(e){document.documentElement.classList.add('dark');}})();`;
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  await connection();
+  // Per-user content is loaded by the authenticated page, never from Vercel's
+  // filesystem or through an extra blocking workspace query in the root shell.
+  const followupsEnabled = true;
   return (
     <html
       lang="en"
@@ -34,7 +41,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     >
       <body className="font-sans antialiased">
         <script dangerouslySetInnerHTML={{ __html: THEME_SCRIPT }} />
-        <AppShell>{children}</AppShell>
+        <RouteProgressHost />
+        <ThemeProvider>
+          <AppShell followupsEnabled={followupsEnabled}>{children}</AppShell>
+        </ThemeProvider>
       </body>
     </html>
   );

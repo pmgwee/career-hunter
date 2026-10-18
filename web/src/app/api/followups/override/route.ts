@@ -2,6 +2,8 @@ import { isRealISODate, localISODate } from "@/lib/followups";
 import { withLogLock, followupsWriteError } from "@/lib/followups-server";
 import { loadCareerWorkspace } from "@/lib/workspace/snapshot";
 import { writeWorkspaceFiles } from "@/lib/workspace/write-files";
+import { readJsonObject } from "@/lib/json-body";
+import { parseFollowupId } from "@/lib/followup-id.mjs";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -16,14 +18,10 @@ export const dynamic = "force-dynamic";
 const pinRe = (appNum: number) => new RegExp(`^-\\s+next\\s+#${appNum}\\s`, "i");
 
 export async function POST(req: Request) {
-  let body: { appNum?: string | number; date?: string };
-  try {
-    body = (await req.json()) as typeof body;
-  } catch {
-    return Response.json({ error: "bad json" }, { status: 400 });
-  }
-  const appNum = Number.parseInt(String(body.appNum ?? ""), 10);
-  if (!Number.isInteger(appNum) || appNum < 0) {
+  const body = await readJsonObject<{ appNum?: string | number; date?: string }>(req);
+  if (!body) return Response.json({ error: "bad json" }, { status: 400 });
+  const appNum = parseFollowupId(body.appNum);
+  if (appNum === null) {
     return Response.json({ error: "appNum (application #) required" }, { status: 400 });
   }
   const date = (body.date ?? "").trim();
@@ -51,14 +49,10 @@ export async function POST(req: Request) {
 
 // Clear the pin for an application (the computed cadence takes over again).
 export async function DELETE(req: Request) {
-  let body: { appNum?: string | number };
-  try {
-    body = (await req.json()) as typeof body;
-  } catch {
-    return Response.json({ error: "bad json" }, { status: 400 });
-  }
-  const appNum = Number.parseInt(String(body.appNum ?? ""), 10);
-  if (!Number.isInteger(appNum) || appNum < 0) {
+  const body = await readJsonObject<{ appNum?: string | number }>(req);
+  if (!body) return Response.json({ error: "bad json" }, { status: 400 });
+  const appNum = parseFollowupId(body.appNum);
+  if (appNum === null) {
     return Response.json({ error: "appNum (application #) required" }, { status: 400 });
   }
 

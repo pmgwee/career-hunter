@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { loadCareerWorkspace } from "@/lib/workspace/snapshot";
 import { writeWorkspaceFiles } from "@/lib/workspace/write-files";
+import { readJsonObject } from "@/lib/json-body";
 
 const MAX_CV_BYTES = 200_000;
 
@@ -9,17 +10,13 @@ export async function GET() {
     const snapshot = await loadCareerWorkspace({ includeFilePaths: ["cv.md"] });
     return NextResponse.json({ content: snapshot.files.get("cv.md") ?? "", exists: snapshot.files.has("cv.md") });
   } catch {
-    return NextResponse.json({ content: "", exists: false });
+    return NextResponse.json({ error: "Cloud CV is unavailable. Please retry." }, { status: 503 });
   }
 }
 
 export async function POST(req: Request) {
-  let body: { content?: string };
-  try {
-    body = await req.json();
-  } catch {
-    return NextResponse.json({ error: "bad json" }, { status: 400 });
-  }
+  const body = await readJsonObject<{ content?: string }>(req);
+  if (!body) return NextResponse.json({ error: "bad json" }, { status: 400 });
   if (typeof body.content !== "string") {
     return NextResponse.json({ error: "content required" }, { status: 400 });
   }
