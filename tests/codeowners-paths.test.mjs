@@ -60,6 +60,12 @@ function linkTarget(p) {
   if (!existsSync(abs)) return null;
   if (lstatSync(abs).isSymbolicLink()) return readlinkSync(abs);
   const text = readFileSync(abs, 'utf-8');
+  // The updater materializes symlink pointers on Windows. A byte-identical
+  // canonical copy is the same entrypoint, not a missing router link.
+  const canonical = join(ROOT, '.agents', 'skills', 'career-ops', 'SKILL.md');
+  if (existsSync(canonical) && text === readFileSync(canonical, 'utf-8')) {
+    return relative(dirname(abs), canonical).split(sep).join('/');
+  }
   return text.length < 200 && /^[^\n]+SKILL\.md\s*$/.test(text) ? text.trim() : null;
 }
 const skillLinks = readdirSync(ROOT)
