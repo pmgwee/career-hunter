@@ -402,3 +402,8 @@ data/interview-prep/
 /tectonic.exe
 /tectonic.part
 /tectonic.part.exe
+
+# Retired/generated fork artifacts remain on disk, not in future commits.
+/.cursor/skills/career-ops/SKILL.md
+/grep.exe.stackdump
+/web/web/.next/

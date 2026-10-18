@@ -14,6 +14,8 @@
 
 // Keep this fork's bundler-safe import: Node and Next load the same canonical
 // table, and either fails immediately if the install is missing/corrupt.
+import { existsSync, readFileSync, readdirSync } from 'fs';
+import { join } from 'path';
 import TRACKER_ALIASES from './tracker-aliases.json' with { type: 'json' };
 
 /** The original fixed 9-column layout (num … notes at indices 1 … 9). */
@@ -576,6 +578,17 @@ export function extractTrackerReportNumbers(reportCell, notesCell = '') {
   return [...numbers];
 }
 
+export function linkedReportNumbers(reportCell, notesCell) {
+  const link = String(reportCell ?? '').match(/\[([^\]]*)\]\(([^)]+)\)/);
+  if (!link) return extractTrackerReportNumbers(reportCell, notesCell);
+  // Reuse the tracker's canonical local-target validation. It rejects HTTP(S)
+  // and protocol-relative links, and returns both numbers on a label/target
+  // mismatch. Exactly one number therefore proves a local, self-consistent
+  // report link. A present-but-invalid link must not fall back to Notes.
+  const validated = extractTrackerReportNumbers(reportCell);
+  return validated.length === 1 ? validated : [];
+}
+
 /**
  * Report links inside a free-form Notes cell.
  *
@@ -693,4 +706,28 @@ export function normalizeTextKey(value, separator = '') {
     .replace(/̇/gu, '')
     .replace(/[^\p{L}\p{M}\p{N}]+/gu, separator)
     .trim();
+}
+
+/**
+ * The posting URL recorded in the first of `reportNumbers` whose report file in
+ * `reportsRoot` has a `**URL:**` line that `accept` takes. Lives here, not in
+ * history-ats-seeds.mjs, because liveness-core.mjs needs it and the web app
+ * loads liveness-core: it must not pull in tracker-utils.mjs and its npm
+ * dependencies, which the web install does not have.
+ */
+export function reportUrlForNumbers(reportNumbers, reportsRoot, accept) {
+  if (!reportsRoot || !existsSync(reportsRoot) || reportNumbers.length === 0) return null;
+  let filenames;
+  try { filenames = readdirSync(reportsRoot); } catch { return null; }
+  for (const reportNum of reportNumbers) {
+    const reportName = filenames.find((name) => new RegExp(`^0*${reportNum}-.*\\.md$`, 'i').test(name));
+    if (!reportName) continue;
+    let report;
+    try { report = readFileSync(join(reportsRoot, reportName), 'utf-8'); } catch { continue; }
+    const match = report.match(/\*\*URL:\*\*[ \t]*(\S+)/);
+    if (!match) continue;
+    const url = match[1].replace(/[),.;]+$/, '').replace(/^<|>$/g, '');
+    if (accept(url)) return url;
+  }
+  return null;
 }
