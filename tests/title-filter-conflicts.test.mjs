@@ -362,4 +362,3 @@ try {
 } finally {
   rmSync(scratch, { recursive: true, force: true, maxRetries: 10 });
 }
-

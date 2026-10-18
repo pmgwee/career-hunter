@@ -111,7 +111,7 @@ export default function DocumentsPage() {
                   </div>
                 </div>
               </div>
-              
+
               <div className="mt-4 flex flex-wrap gap-2">
                 <Badge tone="info" className="capitalize">
                   {doc.kind === "cv" ? "CV" : doc.kind === "cover" ? "Cover Letter" : "Document"}
