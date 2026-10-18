@@ -1,20 +1,25 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
+import { startTransition, useCallback, useEffect, useMemo, useOptimistic, useRef, useState, useTransition } from "react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { Search, ChevronsUpDown, X, Compass, ArrowRight } from "lucide-react";
+import { Search, ChevronsUpDown, X, Compass, ArrowRight, ExternalLink } from "lucide-react";
 import type { Application, InboxJob } from "@/lib/career-ops";
 import { Badge } from "@/components/ui/badge";
 import { CompanyLogo } from "@/components/company-logo";
-import { companyIdentity } from "@/lib/company";
-import { canonStatus, scoreNum, scoreTone } from "@/lib/format";
+import { CANONICAL_STATES, canonStatus, scoreNum, scoreTone } from "@/lib/format";
+import { StatusSelect } from "@/components/status-select";
+import { applicationKey, applySavedStatus, saveStatuses } from "@/lib/pipeline-status.mjs";
 import { InboxTriage } from "@/components/inbox/inbox-triage";
 import { cn } from "@/lib/cn";
-import { PageFrame } from "@/components/page-frame";
+import { companyPresentation, companySearchText } from "@/lib/company-presentation.mjs";
 import { PipelineTableRowsSkeleton } from "@/components/page-loading-skeletons";
 import { startRouteProgress } from "@/components/route-progress";
-import { StatusSelect } from "@/components/status-select";
+import { sortRows } from "@/lib/core/pipeline-sort.mjs";
+import { PageFrame } from "@/components/page-frame";
+import { pipelineQuery } from "@/lib/pipeline-navigation.mjs";
+import { COMPARE_MAX } from "@/lib/pipeline-compare.mjs";
+import { postingHref, postingLabel } from "@/lib/posting-url.mjs";
 
 // INBOX (the triage queue) is the default tab; the rest filter the tracker.
 const TABS = [
@@ -33,7 +38,7 @@ const TABS = [
 ] as const;
 type Tab = (typeof TABS)[number];
 
-const SORT_KEYS = ["company", "role", "score", "status", "date"] as const;
+const SORT_KEYS = ["tracker", "company", "role", "score", "status", "date"] as const;
 type SortKey = (typeof SORT_KEYS)[number];
 
 export function PipelineView({
@@ -46,28 +51,17 @@ export function PipelineView({
   const params = useSearchParams();
   const router = useRouter();
   const pathname = usePathname();
-  const [isPending, startTransition] = useTransition();
+  const [isPending, startNavigation] = useTransition();
   const [pendingTab, setPendingTab] = useState<Tab | null>(null);
-  const [statusOverrides, setStatusOverrides] = useState<Record<string, string>>({});
-
-  // Reflect a successful write immediately, including tab counts and filtering,
-  // while router.refresh() retrieves the authoritative tracker snapshot.
-  const visibleApplications = useMemo(
-    () => applications.map((row) =>
-      statusOverrides[row.n] ? { ...row, status: statusOverrides[row.n] } : row,
-    ),
-    [applications, statusOverrides],
-  );
-
-  useEffect(() => {
-    setStatusOverrides((previous) => {
-      const next = { ...previous };
-      for (const row of applications) {
-        if (next[row.n] === row.status) delete next[row.n];
-      }
-      return Object.keys(next).length === Object.keys(previous).length ? previous : next;
-    });
-  }, [applications]);
+  // Starts AFTER the POST succeeds. React replays the confirmed save over
+  // intervening snapshots and discards it when the refresh transition settles.
+  const [visibleApplications, showSavedStatus] = useOptimistic(applications, applySavedStatus<Application>);
+  const [announcement, setAnnouncement] = useState("");
+  const [selected, setSelected] = useState<ReadonlySet<string>>(new Set());
+  const [bulkStatus, setBulkStatus] = useState("");
+  const [bulkBusy, setBulkBusy] = useState(false);
+  const [bulkError, setBulkError] = useState("");
+  const activeTab = useRef<HTMLButtonElement>(null);
 
   // The URL is the SINGLE source of truth for tab/min/sort/dir, so the home stat
   // tiles' deep links AND the assistant's filterPipeline/navigate actions drive
@@ -84,6 +78,8 @@ export function PipelineView({
   // Search stays LOCAL for snappy typing; seeded from the URL and re-synced only
   // when the URL's q changes (i.e. the assistant set it) — never per keystroke.
   const [q, setQ] = useState(params.get("q") ?? "");
+  // Typing stays local, so include it explicitly when leaving the list.
+  const detailQuery = pipelineQuery(params.toString(), q);
   const lastUrlQ = useRef(params.get("q") ?? "");
   useEffect(() => {
     const urlQ = params.get("q") ?? "";
@@ -107,11 +103,11 @@ export function PipelineView({
         if ((TABS as readonly string[]).includes(nextTab)) setPendingTab(nextTab as Tab);
       }
       startRouteProgress();
-      startTransition(() => {
+      startNavigation(() => {
         router.replace(`${pathname}${qs ? `?${qs}` : ""}`, { scroll: false });
       });
     },
-    [params, router, pathname, startTransition],
+    [params, router, pathname, startNavigation],
   );
 
   useEffect(() => {
@@ -143,22 +139,44 @@ export function PipelineView({
     }
     if (q.trim()) {
       const needle = q.toLowerCase();
-      rows = rows.filter((r) => `${companyIdentity(r.company, r.via).displayName} ${r.via} ${r.role}`.toLowerCase().includes(needle));
+      rows = rows.filter((r) => companySearchText(r).toLowerCase().includes(needle));
     }
-    return [...rows].sort((a, b) => {
-      if (sort.key === "score") {
-        const an = scoreNum(a.score);
-        const bn = scoreNum(b.score);
-        const av = Number.isNaN(an) ? -Infinity : an;
-        const bv = Number.isNaN(bn) ? -Infinity : bn;
-        return (av - bv) * sort.dir;
-      }
-      if (sort.key === "company") {
-        return companyIdentity(a.company, a.via).displayName.localeCompare(companyIdentity(b.company, b.via).displayName) * sort.dir;
-      }
-      return (a[sort.key] || "").localeCompare(b[sort.key] || "") * sort.dir;
-    });
+    // scoreNum is the real score parser (it handles the tracker's "4.2/5"
+    // cells); sortRows takes it rather than keeping a second copy (#4333).
+    return sortRows(
+      rows,
+      sort,
+      scoreNum,
+      (row) => companyPresentation(row).label,
+    ) as Application[];
   }, [visibleApplications, tab, q, sort, minFilter]);
+
+  const filteredKeys = filtered.map(applicationKey);
+  const selectedRows = filtered.filter((r) => selected.has(applicationKey(r)));
+  const allSelected = filteredKeys.length > 0 && filteredKeys.every((k) => selected.has(k));
+
+  function toggleRow(key: string) {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+  }
+
+  async function applyBulkStatus() {
+    if (!bulkStatus || selectedRows.length === 0 || bulkBusy) return;
+    setBulkBusy(true);
+    setBulkError("");
+    const { saved, failed } = await saveStatuses(selectedRows, bulkStatus);
+    setBulkBusy(false);
+    setSelected(new Set(selectedRows.filter((r) => failed.some((f) => f.n === r.n)).map(applicationKey)));
+    if (failed.length > 0) {
+      setBulkError(`${failed.length} not saved: ${failed.map((f) => `#${f.n} (${f.error})`).join(", ")}`);
+    }
+    setAnnouncement(`${saved.length} application${saved.length === 1 ? "" : "s"} set to ${bulkStatus}.`);
+    startTransition(() => router.refresh());
+  }
 
   return (
     <PageFrame>
@@ -196,9 +214,12 @@ export function PipelineView({
           return (
             <button
               key={t}
+              ref={tab === t ? activeTab : undefined}
               onClick={() => setParams({ tab: t === "INBOX" ? null : t })}
               className={cn(
-                "-mb-px inline-flex items-center justify-center border-b-2 px-3 py-2 text-xs font-medium transition-colors max-sm:min-h-[44px]",
+                // gap-1, not a whitespace text node: flex containers drop
+                // whitespace-only anonymous items, which rendered "INBOX0".
+                "-mb-px inline-flex items-center justify-center gap-1 border-b-2 px-3 py-2 text-xs font-medium transition-colors max-sm:min-h-[44px]",
                 visibleTab === t
                   ? "border-brand text-foreground"
                   : "border-transparent text-muted hover:text-foreground",
@@ -209,6 +230,8 @@ export function PipelineView({
           );
         })}
       </div>
+
+      <p role="status" className="sr-only">{announcement}</p>
 
       {visibleTab !== "INBOX" && minFilter != null && (
         <div className="mt-3 flex items-center gap-2">
@@ -225,13 +248,50 @@ export function PipelineView({
         </div>
       )}
 
+      {visibleTab !== "INBOX" && selectedRows.length > 0 && (
+        <div className="mt-3 flex flex-wrap items-center gap-2 rounded-xl border border-border bg-surface/60 px-3 py-2 text-sm">
+          <span className="tabular-nums">{selectedRows.length} selected</span>
+          <select
+            aria-label="Status for selected applications"
+            value={bulkStatus}
+            onChange={(e) => setBulkStatus(e.target.value)}
+            disabled={bulkBusy}
+            className="rounded-md border border-border bg-surface px-2 py-1 text-sm"
+          >
+            <option value="">Set status…</option>
+            {CANONICAL_STATES.map((s) => (
+              <option key={s} value={s}>{s}</option>
+            ))}
+          </select>
+          <button
+            type="button"
+            onClick={applyBulkStatus}
+            disabled={!bulkStatus || bulkBusy}
+            className="rounded-md border border-brand/40 bg-brand-soft px-2.5 py-1 text-xs font-medium text-brand disabled:opacity-50"
+          >
+            {bulkBusy ? "Saving…" : "Apply"}
+          </button>
+          {selectedRows.length >= 2 && selectedRows.length <= COMPARE_MAX && (
+            <Link
+              href={`/pipeline/compare?n=${selectedRows.map((r) => r.n).join(",")}`}
+              className="rounded-md border border-border px-2.5 py-1 text-xs font-medium text-foreground hover:border-brand/40 hover:text-brand"
+            >
+              Compare
+            </Link>
+          )}
+          <button type="button" onClick={() => setSelected(new Set())} className="text-xs text-muted hover:text-foreground">
+            Clear
+          </button>
+          {bulkError && <span role="alert" className="text-xs text-red-500">{bulkError}</span>}
+        </div>
+      )}
+
       {visibleTab === "INBOX" ? (
         /* ── Inbox: the triage surface (Abundance → Triage → Shortlist → Score) ── */
-        pendingInbox.length > 0 ? (
+        <>
           <InboxTriage inbox={pendingInbox} />
-        ) : (
-          <InboxEmpty count={0} filtered={false} />
-        )
+          {pendingInbox.length === 0 && <InboxEmpty tracked={visibleApplications.length} />}
+        </>
       ) : isPending || filtered.length > 0 ? (
         /* ── Tracker table ──
            overflow-x-auto, not overflow-hidden: the rounded corners still clip,
@@ -242,31 +302,80 @@ export function PipelineView({
           <table className="w-full min-w-[44rem] text-sm">
             <thead className="bg-surface/60 text-left text-xs uppercase tracking-wide text-faint">
               <tr>
+                <th className="w-8 px-3 py-2.5">
+                  <input
+                    type="checkbox"
+                    aria-label="Select all shown applications"
+                    checked={allSelected}
+                    onChange={() => setSelected(allSelected ? new Set() : new Set(filteredKeys))}
+                  />
+                </th>
                 {SORT_KEYS.map((k) => (
                   <th
                     key={k}
-                    className="cursor-pointer select-none whitespace-nowrap px-4 py-2.5 font-medium hover:text-foreground"
-                    onClick={() => setParams({ sort: k, dir: sort.key === k ? sort.dir * -1 : -1 })}
+                    aria-sort={sort.key === k ? (sort.dir === 1 ? "ascending" : "descending") : "none"}
+                    className={cn(
+                      "whitespace-nowrap px-4 py-2.5 font-medium",
+                      k === "date" && "hidden lg:table-cell",
+                    )}
                   >
-                    <span className="inline-flex items-center gap-1">
+                    <button
+                      type="button"
+                      className="inline-flex cursor-pointer select-none items-center gap-1 uppercase tracking-wide hover:text-foreground"
+                      onClick={() => setParams({ sort: k, dir: sort.key === k ? sort.dir * -1 : -1 })}
+                    >
                       {k}
-                      <ChevronsUpDown className="size-3" />
-                    </span>
+                      <ChevronsUpDown aria-hidden="true" className="size-3" />
+                    </button>
                   </th>
                 ))}
               </tr>
             </thead>
-            <tbody className="divide-y divide-border" aria-busy={isPending}>
-              {isPending ? <PipelineTableRowsSkeleton /> : filtered.map((r, i) => (
-                <tr key={`${r.n}-${i}`} className="group transition-colors hover:bg-surface/40">
-                  <td className="px-4 py-3 font-medium">
-                    <Link href={`/pipeline/${r.n}`} className="flex items-center gap-2.5 transition-colors group-hover:text-brand">
-                      <CompanyLogo name={companyIdentity(r.company, r.via).logoName} size={20} />
-                      {companyIdentity(r.company, r.via).displayName}
-                    </Link>
-                  </td>
+            {/* Keep editors mounted while query navigation is pending: sorting
+                must not discard an open editor or an in-flight status save. */}
+            <tbody className="divide-y divide-border" hidden={isPending} aria-busy={false}>
+              {filtered.map((r) => {
+                const company = companyPresentation(r);
+                const key = applicationKey(r);
+                const detailHref = `/pipeline/${encodeURIComponent(r.n)}${detailQuery ? `?${detailQuery}` : ""}`;
+                const posting = postingHref(r.url);
+                return (
+                  <tr key={key} data-application-key={key} className="group transition-colors hover:bg-surface/40">
+                    <td className="w-8 px-3 py-3">
+                      <input
+                        type="checkbox"
+                        aria-label={`Select ${company.label}, ${r.role} (#${r.n})`}
+                        checked={selected.has(key)}
+                        onChange={() => toggleRow(key)}
+                      />
+                    </td>
+                    <td className="whitespace-nowrap px-4 py-3 font-medium tabular-nums">
+                      <Link href={detailHref} className="transition-colors group-hover:text-brand">
+                        #{r.n}
+                      </Link>
+                    </td>
+                    <td className="px-4 py-3 font-medium">
+                      <Link href={detailHref} className="flex items-center gap-2.5 transition-colors group-hover:text-brand">
+                        <CompanyLogo name={company.logoName} size={20} />
+                        {company.label}
+                      </Link>
+                    </td>
                   <td className="px-4 py-3 text-muted">
-                    <Link href={`/pipeline/${r.n}`}>{r.role}</Link>
+                    <div className="flex items-center gap-2">
+                      <Link href={detailHref}>{r.role}</Link>
+                      {posting && (
+                        <a
+                          href={posting}
+                          target="_blank"
+                          rel="noreferrer"
+                          title={posting}
+                          className="inline-flex shrink-0 items-center gap-1 text-xs text-brand hover:underline"
+                        >
+                          {postingLabel(posting)}
+                          <ExternalLink className="size-3" />
+                        </a>
+                      )}
+                    </div>
                   </td>
                   <td className="px-4 py-3">
                     <Badge tone={scoreTone(r.score)}>{r.score || "—"}</Badge>
@@ -276,14 +385,32 @@ export function PipelineView({
                       n={r.n}
                       current={r.status}
                       inline
-                      applicationLabel={`${companyIdentity(r.company, r.via).displayName} — ${r.role}`}
-                      onSaved={(status) => setStatusOverrides((previous) => ({ ...previous, [r.n]: status }))}
+                      applicationLabel={`${company.label} — ${r.role} (#${r.n})`}
+                      onSaved={(status, restoreFocus) => {
+                        // If this focused row leaves its tab, preserve a useful
+                        // focus target. Do not interrupt someone using search.
+                        const focusedRow = document.activeElement?.closest("tr");
+                        if (tab !== "ALL" && !canonStatus(status).includes(tab) && (restoreFocus || focusedRow?.dataset.applicationKey === key)) {
+                          activeTab.current?.focus();
+                        }
+                        setAnnouncement(`Application #${r.n} status saved as ${status}.`);
+                        startTransition(() => {
+                          showSavedStatus({ key, status });
+                          router.refresh();
+                        });
+                      }}
                     />
                   </td>
-                  <td className="whitespace-nowrap px-4 py-3 text-faint tabular-nums">{r.date}</td>
-                </tr>
-              ))}
+                  <td className="hidden whitespace-nowrap px-4 py-3 text-faint tabular-nums lg:table-cell">{r.date}</td>
+                  </tr>
+                );
+              })}
             </tbody>
+            {isPending && (
+              <tbody className="divide-y divide-border" aria-busy="true">
+                <PipelineTableRowsSkeleton trackerColumn />
+              </tbody>
+            )}
           </table>
         </div>
       ) : (
@@ -298,15 +425,7 @@ export function PipelineView({
 
 // Empty inbox. Self-sufficient for the mainstream user (a primary in-web action),
 // honest for devs (the CLI/file path stays, demoted to progressive transparency).
-function InboxEmpty({ count, filtered }: { count: number; filtered: boolean }) {
-  if (filtered) {
-    return (
-      <div className="mt-4 rounded-2xl border border-dashed border-border bg-surface/30 px-6 py-12 text-center">
-        <p className="font-display text-lg">No matches</p>
-        <p className="mx-auto mt-1 max-w-sm text-sm text-muted">Clear the search to see the full inbox.</p>
-      </div>
-    );
-  }
+function InboxEmpty({ tracked }: { tracked: number }) {
   return (
     <div className="dot-bg mt-4 overflow-hidden rounded-2xl border border-border bg-surface/50 bg-origin-border bg-gradient-to-tr from-brand/10 via-transparent to-transparent shadow-lg">
       <div className="flex items-center gap-2 border-b border-foreground/10 px-5 py-3">
@@ -319,23 +438,26 @@ function InboxEmpty({ count, filtered }: { count: number; filtered: boolean }) {
         <p className="font-display text-lg">
           Your <span className="text-brand">inbox</span> is empty.
         </p>
-        {count > 0 ? (
-          <p className="mx-auto mt-2 max-w-sm text-sm text-muted">Nothing pending right now.</p>
-        ) : (
-          <>
-            <p className="mx-auto mt-2 max-w-sm text-sm text-muted">Find roles that match your CV — free, no tokens spent.</p>
-            <Link
-              href="/explore?run=1"
-              className="mt-5 inline-flex items-center gap-2 rounded-full bg-brand px-5 py-2.5 text-sm font-medium text-brand-foreground shadow-sm transition-all duration-200 hover:bg-brand-200 hover:-translate-y-0.5 hover:shadow-md"
-            >
-              <Compass className="size-4" /> Run your first free scan <ArrowRight className="size-4" />
-            </Link>
-            <p className="mx-auto mt-4 max-w-sm text-xs text-muted">
-              Prefer the terminal? Run <code className="rounded bg-surface-hover px-1 py-0.5 font-mono">career-ops scan</code>, or add job URLs to{" "}
-              <code className="rounded bg-surface-hover px-1 py-0.5 font-mono">data/pipeline.md</code>.
-            </p>
-          </>
+        {tracked > 0 && (
+          <p className="mx-auto mt-2 max-w-sm text-sm text-muted">
+            New postings land here. Your{" "}
+            <Link href="/pipeline?tab=ALL" className="font-medium text-brand-text underline-offset-2 hover:underline">
+              {tracked} tracked role{tracked === 1 ? "" : "s"}
+            </Link>{" "}
+            {tracked === 1 ? "is" : "are"} under All.
+          </p>
         )}
+        <p className="mx-auto mt-2 max-w-sm text-sm text-muted">Find roles that match your CV — free, no tokens spent.</p>
+        <Link
+          href="/explore?run=1"
+          className="mt-5 inline-flex items-center gap-2 rounded-full bg-brand px-5 py-2.5 text-sm font-medium text-brand-foreground shadow-sm transition-all duration-200 hover:bg-brand-200 hover:-translate-y-0.5 hover:shadow-md"
+        >
+          <Compass className="size-4" /> {tracked > 0 ? "Run a free scan" : "Run your first free scan"} <ArrowRight className="size-4" />
+        </Link>
+        <p className="mx-auto mt-4 max-w-sm text-xs text-muted">
+          Prefer the terminal? Run <code className="rounded bg-surface-hover px-1 py-0.5 font-mono">career-ops scan</code>, or add job URLs to{" "}
+          <code className="rounded bg-surface-hover px-1 py-0.5 font-mono">data/pipeline.md</code>.
+        </p>
       </div>
     </div>
   );

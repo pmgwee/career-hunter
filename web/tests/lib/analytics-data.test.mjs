@@ -47,6 +47,16 @@ test("report prose cannot become location or cross-currency compensation", () =>
   assert.equal(enriched.paySource, "");
 });
 
+test("Search stats evidence comes from notes, not plausible report location/pay/work mode", () => {
+  const report = "**Location:** Austin, TX\n**Remote:** On-site\n**Comp:** USD 180K\n**Archetype:** AI Engineer";
+  const enriched = enrichAnalyticsApplication(application(""), report);
+  assert.equal(enriched.archetype, "AI Engineer");
+  assert.equal(enriched.location, "");
+  assert.equal(enriched.workMode, "");
+  assert.equal(enriched.payMax, 0);
+  assert.equal(enriched.paySource, "");
+});
+
 test("tracker note conventions provide location, work mode and pay", () => {
   const enriched = enrichAnalyticsApplication(
     application("Berlin; Remote; Salary $140-180K (POSTED)"),
@@ -108,4 +118,16 @@ test("a dollar amount explicitly qualified as CAD is not treated as USD", () => 
   assert.equal(enriched.workMode, "Remote");
   assert.equal(enriched.payMax, 0);
   assert.equal(enriched.paySource, "");
+});
+
+test("trailing USD qualifies compensation without accepting other currencies", () => {
+  for (const [notes, expected] of [
+    ["Salary: 140K USD", 140_000],
+    ["Salary: 140-180K USD (POSTED)", 180_000],
+    ["Salary: 140K CAD", 0],
+    ["Salary: CAD $140K", 0],
+    ["Salary: 140K", 0],
+  ]) {
+    assert.equal(enrichAnalyticsApplication(application(notes)).payMax, expected, notes);
+  }
 });

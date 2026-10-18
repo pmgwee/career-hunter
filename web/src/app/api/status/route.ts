@@ -3,7 +3,8 @@ import { execFile } from "node:child_process";
 import fs from "node:fs";
 import { careerOpsRoot, rootScript } from "@/lib/career-ops";
 import { canonicalizeStatus } from "@/lib/core/states";
-import { parseCliJson, trackerRowArg } from "@/lib/status-cli.mjs";
+import { parseCliJson, trackerRowArg, clientErrorMessage } from "@/lib/status-cli.mjs";
+import { readJsonObject } from "@/lib/json-body";
 
 export const runtime = "nodejs"; // delegates to the core CLI via child_process
 
@@ -105,12 +106,8 @@ function runSetStatus(args: string[]): Promise<CliResult> {
 // the document from the end rather than from the first `{`.
 
 export async function POST(req: Request) {
-  let body: { n?: string; status?: string };
-  try {
-    body = await req.json();
-  } catch {
-    return NextResponse.json({ error: "bad json" }, { status: 400 });
-  }
+  const body = await readJsonObject<{ n?: string; status?: string }>(req);
+  if (!body) return NextResponse.json({ error: "bad json" }, { status: 400 });
   const { n, status } = body;
   if (!n || typeof status !== "string" || !status.trim()) {
     return NextResponse.json({ error: "n and status required" }, { status: 400 });
@@ -191,7 +188,13 @@ export async function POST(req: Request) {
       code === 1
         ? (cliCode && CLIENT_ERROR_CODES.has(cliCode) ? 400 : 500)
         : (EXIT_TO_HTTP[code] ?? 500);
-    const error = typeof parsed?.error === "string" ? parsed.error : stderr.trim() || "status update failed";
+    // Child stderr is logged, never echoed: on this path it is most likely a
+    // Node stack trace carrying absolute server paths, the same content the
+    // spawn-failure branch above already keeps out of the response body.
+    if (!parsed && stderr.trim()) {
+      console.error(`/api/status: set-status.mjs exited ${code} without JSON: ${stderr.trim()}`);
+    }
+    const error = clientErrorMessage(parsed, stderr);
     return NextResponse.json(
       { error, ...(cliCode ? { code: cliCode } : {}) },
       {

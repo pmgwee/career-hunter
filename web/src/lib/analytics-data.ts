@@ -33,19 +33,14 @@ function highestMoney(text: string): { value: number; source: "POSTED" | "est" |
   let highest = 0;
   let source: "POSTED" | "est" | "" = "";
   for (const match of text.matchAll(MONEY)) {
-    const hasCurrency = Boolean(match[0].match(/\$|\bUSD\b/));
-    if (!hasCurrency) continue;
     const before = text.slice(Math.max(0, (match.index ?? 0) - 8), match.index ?? 0);
     const after = text.slice((match.index ?? 0) + match[0].length, (match.index ?? 0) + match[0].length + 8);
     if (NON_USD_CURRENCY.test(before) || NON_USD_CURRENCY.test(after)) continue;
+    const hasCurrency = /\$|\bUSD\b/i.test(match[0]) || /^\s*USD\b/i.test(after);
+    if (!hasCurrency) continue;
     const value = Math.max(moneyNumber(match[1], match[2]), moneyNumber(match[3] ?? "0", match[4] ?? ""));
     const trailingText = text.slice((match.index ?? 0) + match[0].length);
     if (/^\s*(?:valuation|(?:total\s+)?raised|series\s|round\b)/i.test(trailingText)) continue;
-    // Bare M/B values in prose are usually company scale or valuation, not
-    // compensation (for example, "1,079.2M devices"). Keep currency-backed
-    // values, but do not let those metrics become a salary datapoint.
-    if (!hasCurrency && /[MmBb]/.test(`${match[2] ?? ""}${match[4] ?? ""}`)) continue;
-    if (!hasCurrency && value > 500_000) continue;
     if (value > highest) {
       highest = value;
       const context = text.slice(Math.max(0, (match.index ?? 0) - 24), Math.min(text.length, (match.index ?? 0) + match[0].length + 40)).toLowerCase();
@@ -72,45 +67,40 @@ function normalizeWorkMode(raw: string, text: string): string {
 }
 
 function fallbackLocation(text: string): string {
-  // Require the comma so prose such as "Apply to one team" cannot be
-  // mistaken for a US city/state pair. Also reject short all-caps acronyms.
+  // Require the comma for US city/state pairs. Free-form notes often contain
+  // uppercase prose such as "BEST TECHNICAL FIT IN THE PIPELINE"; accepting
+  // a bare `City ST` shape turns "Best Technical Fit IN" into Indiana.
   const cityState = text.match(/\b([A-Z][A-Za-z.'-]+(?: [A-Z][A-Za-z.'-]+){0,2}),\s*(?:A[KLRZ]|C[AOT]|D[CE]|FL|GA|HI|I[ADLN]|K[SY]|LA|M[ADEINOST]|N[CDEHJMVY]|O[HKR]|PA|RI|S[CD]|T[NX]|UT|V[AT]|W[AIVY])\b/);
   if (cityState?.[1] && !(cityState[1].length <= 3 && cityState[1] === cityState[1].toUpperCase())) return cityState[1];
   const cities = text.match(/\b(Porto|Lisbon|London|Berlin|Munich|München|Hamburg|Frankfurt|Cologne|Düsseldorf|Dusseldorf|Stuttgart|Zurich|Zürich|Geneva|Lausanne|Basel|Dublin|Cork|Amsterdam|Rotterdam|Eindhoven|Utrecht|Paris|Lyon|Madrid|Barcelona|Valencia|Stockholm|Gothenburg|Malmö|Malmo|Copenhagen|Oslo|Helsinki|Milan|Rome|Turin|Vienna|Brussels|Ghent|Antwerp|Luxembourg|Warsaw|Kraków|Krakow|Wrocław|Wroclaw|Tallinn|Riga|Vilnius|Prague|Brno|Budapest|Bucharest|Sofia|Athens|Bengaluru|Bangalore|Singapore|Sydney|Toronto|Vancouver|Tel Aviv|São Paulo|Sao Paulo|Kuala Lumpur|Petaling Jaya|Cyberjaya)\b/i);
   return cities?.[1] ?? "";
 }
 
-function reportFields(content: string, fallbackArchetype: string) {
+function reportArchetype(content: string, fallbackArchetype: string): string {
   const meta = parseReport(content);
   const machine = content.match(/##\s+Machine Summary[\s\S]*?```(?:yaml)?\s*([\s\S]*?)```/i)?.[1] ?? content;
   const archetypeTable = content.match(/\*\*(?:Archetype detected|Archetype)\*\*\s*\|\s*([^|\n]+)/i)?.[1]?.replace(/\*+/g, "").trim() ?? "";
-  const archetype = scalar(machine, "archetype_primary") || scalar(machine, "archetype") || archetypeTable || meta.fields.find((field) => field.label === "Archetype")?.value || fallbackArchetype;
-  const explicitLocation = /\|\s*Location(?:s)?(?: field)?\s*\|\s*([^|\n]+)/i.exec(content)?.[1]?.trim()
-    ?? /\*\*Location\*\*\s*[:|]\s*([^|\n]+)/i.exec(content)?.[1]?.trim()
-    ?? "";
-  const location = scalar(machine, "location") || explicitLocation || fallbackLocation(content);
-  const workMode = normalizeWorkMode(scalar(machine, "work_mode"), "");
-  const compensation = [scalar(machine, "advertised_comp"), scalar(machine, "comp_estimate_myr_month"), scalar(machine, "compensation")].filter(Boolean).join(" ");
-  const pay = highestMoney(compensation);
-  return { archetype, location, workMode, payMax: pay.value, paySource: pay.source };
+  return scalar(machine, "archetype_primary") || scalar(machine, "archetype") || archetypeTable || meta.fields.find((field) => field.label === "Archetype")?.value || fallbackArchetype;
 }
 
-/** Pure enrichment counterpart used by analytics tests and alternate callers. */
+/** Read-only Search stats display metadata, not a second lifecycle engine.
+ * Unlike the Go TUI's general-purpose note enrichment, these USD-only charts
+ * require explicit work-mode evidence and must not guess on-site from a city.
+ * Keep those reviewed evidence/unit boundaries here until the core exposes
+ * an equivalent row-metadata contract; statuses and history remain core-owned.
+ */
 export function enrichAnalyticsApplication(app: Application, reportContent = ""): AnalyticsApplication {
   const notes = app.notes ?? "";
-  const derived = reportFields(reportContent, "");
   const notePay = highestMoney(notes);
   const combinedText = `${app.role} ${notes}`;
   const noteLocation = fallbackLocation(notes);
   return {
     ...app,
-    archetype: derived.archetype,
-    // Tracker notes are the authoritative analytics location; report prose is
-    // too free-form to safely infer a location from.
+    archetype: reportArchetype(reportContent, ""),
     location: noteLocation,
-    workMode: derived.workMode || normalizeWorkMode("", combinedText),
-    payMax: notePay.value || derived.payMax,
-    paySource: notePay.value ? notePay.source : derived.paySource,
+    workMode: normalizeWorkMode("", combinedText),
+    payMax: notePay.value,
+    paySource: notePay.source,
   };
 }
 

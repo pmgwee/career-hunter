@@ -82,6 +82,7 @@ const FIELD_KEYS: Record<string, string> = {
   archetype: "Archetype",
   arquetipo: "Archetype",
   score: "Score",
+  decision: "Decision",
   legitimacy: "Legitimacy",
   legitimidad: "Legitimacy",
   pdf: "PDF",

@@ -1,15 +1,9 @@
-"use client";
-
-import { useEffect, useState } from "react";
-import Link from "next/link";
-import { ArrowUpRight, BarChart3, BriefcaseBusiness, CircleDollarSign, MapPin, Sparkles, Target } from "lucide-react";
-import type { AnalyticsApplication } from "@/lib/analytics-data";
+import { ArrowUpRight, BarChart3, BriefcaseBusiness, CircleDollarSign, MapPin, Sparkles } from "lucide-react";
 import { PageFrame } from "@/components/page-frame";
-import { AnalyticsContentSkeleton } from "@/components/page-loading-skeletons";
-import { startRouteProgress } from "@/components/route-progress";
+import { AnalyticsNavigation } from "@/components/analytics-navigation";
 
 type ProgressMetrics = {
-  evaluated: number;
+  tracked: number;
   avgScore: number;
   activeApps: number;
   totalOffers: number;
@@ -34,27 +28,11 @@ type StatsMetrics = {
 
 const BAR_TONES = ["bg-brand", "bg-sky-400", "bg-emerald-400", "bg-yellow-300", "bg-orange-300", "bg-pink-400"];
 
-export function AnalyticsView({
-  applications,
-  progress,
-  stats,
-  insights,
-  tab,
-}: {
-  applications: AnalyticsApplication[];
-  progress: ProgressMetrics;
-  stats: StatsMetrics;
-  insights: string[];
-  tab: "progress" | "search-stats";
+export function AnalyticsShell({ total, view, children }: {
+  total: number;
+  view: "progress" | "search-stats" | "insights";
+  children: React.ReactNode;
 }) {
-  const [pendingTab, setPendingTab] = useState<"progress" | "search-stats" | null>(null);
-  const visibleTab = pendingTab ?? tab;
-  const loadingTab = pendingTab !== null && pendingTab !== tab ? pendingTab : null;
-
-  useEffect(() => {
-    if (pendingTab === tab) setPendingTab(null);
-  }, [pendingTab, tab]);
-
   return (
     <PageFrame>
       <header className="flex flex-col gap-5 border-b border-border pb-5 sm:flex-row sm:items-end sm:justify-between">
@@ -67,69 +45,21 @@ export function AnalyticsView({
         </div>
         <div className="flex items-center gap-2 text-xs text-faint">
           <span className="size-1.5 rounded-full bg-emerald-400" aria-hidden="true" />
-          <span className="tabular-nums">{applications.length}</span> tracked evaluations
+          <span className="tabular-nums">{total}</span> tracked evaluation{total === 1 ? "" : "s"}
         </div>
       </header>
 
-      <nav aria-label="Analytics views" className="mt-5 -mb-px flex gap-1 overflow-x-auto border-b border-border">
-        <AnalyticsTab
-          href="/analytics?tab=progress"
-          active={visibleTab === "progress"}
-          icon={<BarChart3 className="size-3.5" />}
-          onNavigate={() => {
-            startRouteProgress();
-            setPendingTab("progress");
-          }}
-        >
-          Search progress
-        </AnalyticsTab>
-        <AnalyticsTab
-          href="/analytics?tab=search-stats"
-          active={visibleTab === "search-stats"}
-          icon={<Target className="size-3.5" />}
-          onNavigate={() => {
-            startRouteProgress();
-            setPendingTab("search-stats");
-          }}
-        >
-          Search stats
-        </AnalyticsTab>
-      </nav>
-
-      {loadingTab ? <AnalyticsContentSkeleton tab={loadingTab} /> : tab === "progress" ? <ProgressPanel metrics={progress} /> : <StatsPanel metrics={stats} insights={insights} />}
+      <AnalyticsNavigation view={view}>{children}</AnalyticsNavigation>
     </PageFrame>
   );
 }
 
-function AnalyticsTab({ href, active, icon, onNavigate, children }: { href: string; active: boolean; icon: React.ReactNode; onNavigate: () => void; children: React.ReactNode }) {
-  return (
-    <Link
-      href={href}
-      onClick={(event) => {
-        if (active) {
-          event.preventDefault();
-          return;
-        }
-        if (event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
-        onNavigate();
-      }}
-      aria-current={active ? "page" : undefined}
-      className={`-mb-px inline-flex min-h-11 shrink-0 items-center gap-2 border-b-2 px-3 text-xs font-semibold transition-colors ${
-        active ? "border-brand text-foreground" : "border-transparent text-muted hover:border-border hover:text-foreground"
-      }`}
-    >
-      {icon}
-      {children}
-    </Link>
-  );
-}
-
-function ProgressPanel({ metrics }: { metrics: ProgressMetrics }) {
+export function ProgressPanel({ metrics }: { metrics: ProgressMetrics }) {
   const maxWeeklyActivity = Math.max(1, ...metrics.weeklyActivity.map((row) => row.count));
   return (
     <div className="mt-6 space-y-5">
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <MetricCard label="Evaluated" value={metrics.evaluated} icon={<BarChart3 className="size-4" />} />
+        <MetricCard label="Tracked" value={metrics.tracked} icon={<BarChart3 className="size-4" />} />
         <MetricCard label="Average score" value={metrics.avgScore ? `${metrics.avgScore.toFixed(2)}/5` : "—"} icon={<Sparkles className="size-4" />} />
         <MetricCard label="Active applications" value={metrics.activeApps} icon={<BriefcaseBusiness className="size-4" />} />
         <MetricCard label="Offers" value={metrics.totalOffers} icon={<ArrowUpRight className="size-4" />} />
@@ -139,7 +69,7 @@ function ProgressPanel({ metrics }: { metrics: ProgressMetrics }) {
         <Panel eyebrow="Funnel" title="Pipeline progress" description="Cumulative roles that reached each stage.">
           <div className="mt-5 space-y-3.5">
             {metrics.funnel.map((stage, index) => (
-              <BarRow key={stage.label} label={stage.label} count={stage.count} pct={stage.pct} widthPct={metrics.evaluated ? (stage.count / metrics.evaluated) * 100 : 0} tone={index === metrics.funnel.length - 1 ? "bg-brand" : "bg-sky-400"} />
+              <BarRow key={stage.label} label={stage.label} count={stage.count} pct={stage.pct} widthPct={metrics.tracked ? (stage.count / metrics.tracked) * 100 : 0} tone={index === metrics.funnel.length - 1 ? "bg-brand" : "bg-sky-400"} />
             ))}
           </div>
         </Panel>
@@ -166,7 +96,7 @@ function ProgressPanel({ metrics }: { metrics: ProgressMetrics }) {
           {metrics.weeklyActivity.length ? (
             <div className="mt-5 space-y-3">
               {metrics.weeklyActivity.map((week) => {
-                return <BarRow key={week.week} label={week.shortWeek} count={week.count} widthPct={(week.count / maxWeeklyActivity) * 100} tone="bg-sky-400" />;
+                return <BarRow key={week.week} label={week.week} count={week.count} widthPct={(week.count / maxWeeklyActivity) * 100} tone="bg-sky-400" />;
               })}
             </div>
           ) : <EmptyData label="No dated activity yet" detail="Weekly activity will appear once evaluations have valid dates." />}
@@ -176,7 +106,8 @@ function ProgressPanel({ metrics }: { metrics: ProgressMetrics }) {
   );
 }
 
-function StatsPanel({ metrics, insights }: { metrics: StatsMetrics; insights: string[] }) {
+export function StatsPanel({ metrics, insights }: { metrics: StatsMetrics; insights: string[] }) {
+  const scoredRoleCount = metrics.qualityTiers.reduce((sum, row) => sum + row.count, 0);
   return (
     <div className="mt-6 space-y-5">
       <div className="grid gap-5 xl:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
@@ -185,8 +116,8 @@ function StatsPanel({ metrics, insights }: { metrics: StatsMetrics; insights: st
         </Panel>
         <Panel eyebrow="Fit quality" title="How many roles clear the bar" description="Scored roles grouped by the evaluation threshold.">
           <div className="mt-4 flex items-end justify-between gap-4">
-            <div className="font-display text-4xl tracking-tight text-landing">{metrics.qualityBarPct ? `${Math.round(metrics.qualityBarPct)}%` : "—"}</div>
-            <div className="text-right text-xs text-muted">meet ≥4.0<br /><span className="tabular-nums">{metrics.qualityTiers.reduce((sum, row) => sum + row.count, 0)}</span> scored roles</div>
+            <div className="font-display text-4xl tracking-tight text-landing">{scoredRoleCount ? `${Math.round(metrics.qualityBarPct)}%` : "—"}</div>
+            <div className="text-right text-xs text-muted">meet ≥4.0<br /><span className="tabular-nums">{scoredRoleCount}</span> scored roles</div>
           </div>
           <Distribution rows={metrics.qualityTiers} />
         </Panel>
@@ -206,7 +137,7 @@ function StatsPanel({ metrics, insights }: { metrics: StatsMetrics; insights: st
         <Panel eyebrow="Location" title="Where roles are based"><BreakdownList rows={metrics.locations} icon={<MapPin className="size-3.5" />} emptyLabel="No location data" /></Panel>
       </div>
 
-      <Panel eyebrow="Compensation" title="Pay range and salary bands" icon={<CircleDollarSign className="size-4" />}>
+      <Panel eyebrow="Compensation" title="USD pay range and salary bands" icon={<CircleDollarSign className="size-4" />}>
         {metrics.pay.count ? <>
           <div className="grid grid-cols-2 gap-4 sm:grid-cols-5">
             <PayStat label="Average" value={money(metrics.pay.avgPayMax)} />
@@ -216,7 +147,7 @@ function StatsPanel({ metrics, insights }: { metrics: StatsMetrics; insights: st
             <PayStat label="Posted / est." value={`${metrics.pay.postedCount} / ${metrics.pay.estimatedCount}`} />
           </div>
           <div className="mt-6 border-t border-border pt-5"><p className="font-mono text-[11px] font-semibold uppercase tracking-[0.16em] text-muted">Salary band distribution</p><div className="mt-4 space-y-3">{metrics.payHistogram.map((row, index) => <BarRow key={row.label} label={row.label} count={row.count} pct={row.pct} widthPct={row.pct} tone={BAR_TONES[index]} />)}</div></div>
-        </> : <EmptyData label="No compensation data" detail="Pay appears when a report or tracker note contains a posted or estimated range." />}
+        </> : <EmptyData label="No USD compensation data" detail="Pay appears when tracker notes contain a USD-denominated posted or estimated range." />}
       </Panel>
     </div>
   );
@@ -245,7 +176,7 @@ function Distribution({ rows, emptyLabel = "No distribution data" }: { rows: { l
 }
 
 function BreakdownList({ rows, icon, emptyLabel }: { rows: { label: string; count: number; pct: number }[]; icon: React.ReactNode; emptyLabel: string }) {
-  if (!rows.length) return <EmptyData label={emptyLabel} detail="This dimension is not present in the available reports." />;
+  if (!rows.length) return <EmptyData label={emptyLabel} detail="Add an explicit work mode or location to the tracker notes to populate this dimension." />;
   return <div className="mt-4 space-y-3">{rows.map((row, index) => <div key={row.label} className="flex items-center gap-2 text-sm"><span className="text-brand">{icon}</span><span className="min-w-0 flex-1 break-words text-muted">{row.label}</span><span className="font-mono text-xs tabular-nums text-foreground">{row.count}</span><span className="w-12 text-right font-mono text-[11px] tabular-nums text-faint">{Math.round(row.pct)}%</span></div>)}</div>;
 }
 

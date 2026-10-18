@@ -10,7 +10,7 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import { WorkerPills } from "@/components/jobs/worker-pills";
 import { UsageMeter } from "@/components/usage-meter";
 import { instrumentSerif } from "@/lib/fonts";
-import { NAV_ITEMS, isActivePath } from "@/lib/nav-items";
+import { visibleNavItems, isActivePath, type NavItem } from "@/lib/nav-items";
 import { useJobs } from "@/components/jobs/job-store";
 import { startRouteProgress } from "@/components/route-progress";
 
@@ -35,7 +35,7 @@ const STYLE = `
 @media(prefers-reduced-motion:reduce){.co-mdrawer,.co-mscrim{transition:none}.co-pulse{animation:none}}
 `;
 
-export function MobileNav() {
+export function MobileNav({ followupsEnabled }: { followupsEnabled: boolean }) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const panelRef = useRef<HTMLElement>(null);
@@ -151,7 +151,7 @@ export function MobileNav() {
         </div>
 
         <nav className="flex flex-col gap-1 px-3">
-          {NAV_ITEMS.map(({ href, label, icon: Icon, chip }) => {
+          {visibleNavItems(followupsEnabled).map(({ href, label, icon: Icon, chip }) => {
             const active = isActivePath(href, pathname);
             return (
               <Link
@@ -199,7 +199,7 @@ export function MobileNav() {
   );
 }
 
-function MobileNavIcon({ icon: Icon, active }: { icon: (typeof NAV_ITEMS)[number]["icon"]; active: boolean }) {
+function MobileNavIcon({ icon: Icon, active }: { icon: NavItem["icon"]; active: boolean }) {
   const { pending } = useLinkStatus();
   if (pending) return <Loader2 className="size-5 animate-spin text-brand" />;
   return <Icon className={cn("size-5", active && "text-brand-text")} />;

@@ -1,6 +1,33 @@
+import { buildConversationContext } from "@/lib/assistant-history.mjs";
 import { spawnHeadlessCli } from "@/lib/spawn-cli.mjs";
-import { resolveCli } from "@/lib/clis";
+import { cliSubstitutionNotice, cliUnavailableError, resolveCliOrFallback } from "@/lib/clis";
 import { careerOpsRoot, readMemory, doctorState } from "@/lib/career-ops";
+import { resolveCodeRoot } from "@/lib/core/code-root.mjs";
+import { CAPS } from "@/lib/worker-capabilities.mjs";
+import { scopeFrom } from "@/lib/claude-invocation.mjs";
+import { fencingReport } from "@/lib/cli-fencing.mjs";
+
+// Deny list DERIVED, never hand-written: every one of the six advisor argvs
+// that spelled its own omitted MultiEdit, which --permission-mode acceptEdits
+// then auto-approves (#2185, #2507).
+const ADVISOR_SCOPE = scopeFrom("Read,WebFetch,Glob,Grep");
+import { readPersonalizationState } from "@/lib/personalization-file.mjs";
+import { readJsonObject } from "@/lib/json-body";
+
+/**
+ * Human labels of the modes/_profile.md sections still identical to the template.
+ * null = could not be determined (profile or template unreadable): the caller
+ * must say so rather than report "filled" or ask for writes that would fail.
+ */
+function personalizationGeneric(): string[] | null {
+  try {
+    return readPersonalizationState(careerOpsRoot(), resolveCodeRoot(process.cwd(), process.env)).sections
+      .filter((s: { state: string }) => s.state !== "filled")
+      .map((s: { heading: string }) => s.heading.replace(/^## Your /, "").toLowerCase());
+  } catch {
+    return null;
+  }
+}
 
 export const runtime = "nodejs"; // child_process (spawn) requires the Node runtime
 export const dynamic = "force-dynamic";
@@ -29,6 +56,7 @@ ACTIONS:
 - remember {"fact":"the concise fact"} — durably remember a preference/fact about the user (carries across sessions and across whichever CLI runs).
 - setProfile {"name":"…","email":"…","location":"…","roles":["AI Engineer","ML Engineer"],"compMin":70000,"compMax":95000,"currency":"EUR","remote":"Remote (EU)","seniority":"Senior"} — PROPOSE the user's profile; the app shows a confirm card and ONLY on their OK writes config/profile.yml (merge-safe — it never clobbers their other fields) AND seeds the free scanner from the roles. Emit only fields you're confident about (most come from their CV). NEVER write a profile they didn't approve.
 - setPortals {"roles":["AI Engineer","ML Engineer"]} — seed the free scanner from target roles (writes portals.yml title_filter). Usually unnecessary — setProfile already does this.
+- setPersonalization {"targetRoles":[{"archetype":"AI Platform Engineer","axes":"evals, observability, pipelines","buys":"someone who ships AI to production with metrics"}],"adaptiveFraming":[{"role":"Platform / LLMOps","emphasize":"production systems, evals","proof":"cv.md"}],"exitNarrative":"…","crossCuttingAdvantage":"…","compTargets":"…","negotiationScripts":["…"],"locationPolicy":["…"],"portfolio":{"url":"https://…","description":"…","whenToShare":"…"}} — PROPOSE the user's personalization (the archetypes, framing, exit story, comp and location policy that every evaluation scores against). The app shows a confirm card and ONLY on their OK writes the matching sections of their personalization file, leaving everything else untouched. Emit only sections you have real material for (from the CV + conversation); you may emit it in several passes, one or two sections at a time. NEVER write personalization they didn't approve.
 
 RULES: prefer evaluateCompany over guessing URLs; NEVER invent URLs. Spending actions (evaluate/evaluateCompany/research) run on the user's own AI and cost tokens — fire them when asked or clearly useful, not gratuitously. NEVER auto-submit a job application. (Back-compat: <<go:/path>> and <<remember:fact>> still work.)
 
@@ -37,6 +65,7 @@ ONBOARDING — your job is to get this person to their first SCORED job FAST. Th
 2. WOW #1 — DISCOVER, FREE. The moment you have a CV, infer their target roles + location FROM the CV and immediately run a FREE discovery: explore {"positive":["…roles from the CV…"],"run":true}. Say "Before we set anything up — here are live roles that fit you, free." A job THEY didn't have to define is the aha trigger.
 3. Then DEEPEN, value-interleaved. Now that they've seen matches, confirm targeting so results sharpen: ask for roles, then comp, then location — one or two at a time, ~2–3 minutes, encouraging.
 4. PROPOSE, don't impose. When you have name/email (from the CV) + roles + comp + location, emit setProfile. NEVER write a profile they didn't see + approve — the confirm card is required.
+4b. PERSONALIZE, like a recruiter building their brief. Right after the profile is saved (or whenever SETUP STATE lists personalization sections still on the template), work through them conversationally, one or two at a time: which 3–6 role ARCHETYPES they are really competing for and what each buyer wants; how to FRAME them per archetype with proof from the CV; their EXIT NARRATIVE (why they are moving, in their words); their CROSS-CUTTING ADVANTAGE; comp targets and location policy. Reflect each answer back in one line, then emit setPersonalization for just those sections — the confirm card is required every time. Skip any section already marked filled.
 5. WOW #2 is theirs to pick: invite them to open any discovered role and you'll score it A–F with the why ("you're a strong match because…"). That first scored-job-with-explanation is the north star.
 Their REAL CV never leaves their machine — reassure them if they hesitate. Never reveal internal file names or YAML unless asked.
 
@@ -45,28 +74,28 @@ Keep replies short, warm, and useful. Don't dump raw files or narrate internal d
 type Msg = { role: "user" | "assistant"; content: string };
 
 export async function POST(req: Request) {
-  let body: { message?: string; cliId?: string; history?: Msg[]; pageContext?: string };
-  try {
-    body = await req.json();
-  } catch {
-    return new Response(JSON.stringify({ error: "bad json" }), { status: 400 });
-  }
-  const { message, cliId, pageContext } = body;
-  if (!message || !cliId) {
+  const body = await readJsonObject<{ message?: string; cliId?: string; history?: Msg[]; pageContext?: string }>(req);
+  if (!body) return new Response(JSON.stringify({ error: "bad json" }), { status: 400 });
+  const { message, cliId: requestedCliId, pageContext } = body;
+  if (!message || !requestedCliId) {
     return new Response(JSON.stringify({ error: "message and cliId required" }), { status: 400 });
   }
 
-  const resolved = resolveCli(cliId);
+  const resolved = resolveCliOrFallback(requestedCliId);
   if (!resolved) {
-    return new Response(JSON.stringify({ error: `CLI '${cliId}' not found on this machine` }), {
+    return new Response(JSON.stringify(cliUnavailableError(requestedCliId)), {
       status: 404,
       headers: { "Content-Type": "application/json" },
     });
   }
   const { spec, binPath } = resolved;
+  // The CLI actually running: fencing and argv below are keyed on it.
+  const cliId = spec.id;
+  const substitution = cliSubstitutionNotice(resolved);
 
-  const history = (body.history ?? []).slice(-8);
-  const convo = history.map((m) => `${m.role === "user" ? "User" : "Assistant"}: ${m.content}`).join("\n");
+  let convo: string;
+  try { convo = buildConversationContext(body.history ?? []); }
+  catch { return Response.json({ error: "Invalid conversation history" }, { status: 400 }); }
   const pageLine = pageContext
     ? `\n\nCURRENT PAGE (the user is looking at this right now): ${pageContext}\nWhen the user's message is ambiguous ("this", "it", "apply", "evaluate this", "draft it"), assume it refers to what's on the current page.`
     : "";
@@ -79,9 +108,19 @@ export async function POST(req: Request) {
   // the home was correctly nudging for the missing PROFILE while the assistant,
   // given no state, restarted its onboarding script and asked for the CV again.
   const { hasCv, onboardingNeeded, missing } = doctorState();
-  const setupLine = onboardingNeeded
-    ? `\n\nSETUP STATE (authoritative — the SAME signal the home screen uses; trust it over guessing, and do NOT re-ask for anything already on file):\n- CV on file (cv.md): ${hasCv ? "YES — do NOT ask for it again; read it to be concrete" : "NO — this is the first thing to collect"}\n- Still missing: ${missing.length ? missing.join(", ") : "nothing"}\nWhen onboarding, START at the first item actually missing. If the CV is already on file, SKIP step 1 entirely and go straight to the next missing prerequisite (usually the profile — target roles, comp, location).`
-    : `\n\nSETUP STATE: this user is fully set up (CV + profile + scanner all on file). Do NOT run onboarding or ask for a CV — just help them with what they actually asked.`;
+  // Personalization sections still on the shipped template: the fourth
+  // prerequisite is "present" the moment doctor auto-copies the template, so
+  // doctorState alone would call a generic file "done". Section state is what
+  // tells the assistant which parts of the brief are still not this person's.
+  const generic = personalizationGeneric();
+  const personalizationLine = generic === null
+    ? "\n- Personalization: could not be read right now — do NOT emit setPersonalization and do NOT say it is complete; if the user asks, tell them the personalization file could not be read"
+    : generic.length
+      ? `\n- Personalization still on the template (ask about these, then setPersonalization): ${generic.join(", ")}`
+      : "\n- Personalization: filled";
+  const setupLine = onboardingNeeded || generic === null || generic.length
+    ? `\n\nSETUP STATE (authoritative — the SAME signal the home screen uses; trust it over guessing, and do NOT re-ask for anything already on file):\n- CV on file (cv.md): ${hasCv ? "YES — do NOT ask for it again; read it to be concrete" : "NO — this is the first thing to collect"}\n- Still missing: ${missing.length ? missing.join(", ") : "nothing"}${personalizationLine}\nWhen onboarding, START at the first item actually missing. If the CV is already on file, SKIP step 1 entirely and go straight to the next missing prerequisite (usually the profile — target roles, comp, location), then the personalization sections still on the template.`
+    : `\n\nSETUP STATE: this user is fully set up (CV + profile + scanner + personalization all on file). Do NOT run onboarding or ask for a CV — just help them with what they actually asked.`;
   const prompt = `${SYSTEM_PREAMBLE}${setupLine}${memoryLine}${pageLine}\n\n--- Conversation ---\n${convo}\nUser: ${message}\nAssistant:`;
 
   // Claude Code streams token-level deltas via stream-json + partial messages.
@@ -102,14 +141,35 @@ export async function POST(req: Request) {
         "--include-partial-messages",
         "--permission-mode",
         "acceptEdits",
+        // --strict-mcp-config with no --mcp-config loads ZERO MCP servers, so the
+        // tool lists here describe everything this agent can reach. Required for a
+        // non-writing worker: without it a user MCP server could supply a write tool
+        // the capability record forbids, and cli-fencing refuses to certify that (#2507).
+        "--strict-mcp-config",
         "--allowedTools",
-        "Read,WebFetch,Glob,Grep",
+        ADVISOR_SCOPE.allowed,
         "--disallowedTools",
-        "Bash,Write,Edit,NotebookEdit,Task",
+        ADVISOR_SCOPE.disallowed,
       ]
     : spec.args(prompt);
 
-  const child = spawnHeadlessCli(binPath, args, { cwd: careerOpsRoot(), env: process.env });
+  // The advisor reads and fetches but must never write — the same intent the
+  // Claude branch spells as Read,WebFetch,Glob,Grep with Bash/Write/Edit denied.
+  // networkReadOnly, not localReadOnly, because WebFetch is in that allow list.
+  let child;
+  try {
+    child = spawnHeadlessCli(
+      binPath,
+      args,
+      { cwd: careerOpsRoot(), env: process.env },
+      { cliId, capabilities: CAPS.networkReadOnly },
+    );
+  } catch (e) {
+    // Fencing refuses an argv that contradicts the capability record. Report it
+    // in this route's own error shape rather than letting the throw escape POST
+    // as an unhandled rejection and an unstructured 500.
+    return Response.json({ error: e instanceof Error ? e.message : "failed to start the CLI" }, { status: 500 });
+  }
 
   const encoder = new TextEncoder();
   // `closed` + kill timer in the OUTER scope so cancel() can flip `closed` before
@@ -152,6 +212,15 @@ export async function POST(req: Request) {
       const emit = (s: string) => {
         if (safeEnqueue(s)) emitted = true;
       };
+      // Same honesty as /api/run: a runtime with no verified fencing mechanism
+      // runs with its default access, and that must be visible rather than
+      // inferred from which CLI happens to be selected (#2507). This stream is
+      // plain text, so the notice is a leading line rather than an event.
+      const fencing = fencingReport({ cliId, cliName: spec.name, capabilities: CAPS.networkReadOnly });
+      if (fencing.notice) safeEnqueue(`⚠️ ${fencing.notice}
+
+`);
+      if (substitution) safeEnqueue(`⚠️ ${substitution}\n\n`);
 
       child.stdout.on("data", (d: Buffer) => {
         if (closed) return;
